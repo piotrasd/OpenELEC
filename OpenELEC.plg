@@ -60,7 +60,7 @@ fi
 
 
 <FILE Name="&plugin;/&version;.tar.gz">
-<URL>https://raw.githubusercontent.com/&author;/&name;/archive/&version;.tar.gz</URL>
+<URL>https://github.com/&author;/&name;/archive/&version;.tar.gz</URL>
 </FILE>
 
 
