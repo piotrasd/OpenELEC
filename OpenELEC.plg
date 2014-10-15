@@ -2,6 +2,8 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-15a
+			- Eric: Removed network code block and added more safety checks for disks_mounted event script
 		2014-10-15
 			- Eric: Lots of bug fixes, cleanup, and move to GitHub.
 		2014-10-07
@@ -28,7 +30,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.15">
+	<!ENTITY version   "2014.10.15a">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
@@ -39,24 +41,6 @@
 		 version="&version;"
 		 pluginURL="&pluginURL;"
 >
-
-<FILE Run="/bin/bash">
-<INLINE>
-# Wait until network is ready
-timer=60
-while [ $timer -gt 0 ]; do
-	gateway=$(route -n | awk '/^0.0.0.0/ {print $2}')
-	if [ -n "$gateway" ] &amp;&amp; [ $(ping -q -n -c 1 $gateway | awk -F, '/received/ {print $2}' | awk '{print $1}') -eq 1 ]; then
-		break
-	fi
-	timer=$((timer-1))
-	sleep 1
-done
-if [ $timer -eq 0 ]; then
-	echo "No network communication !!!"
-fi
-</INLINE>
-</FILE>
 
 
 <FILE Name="&plugin;/&version;.tar.gz">
@@ -70,9 +54,11 @@ if [ ! -d &emhttp; ]; then
 	mkdir -p &emhttp;
 fi
 tar -zxf &plugin;/&version;.tar.gz --strip=1 -C &emhttp;/
-&emhttp;/event/disks_mounted
 </INLINE>
 </FILE>
+
+
+<FILE Name="&emhttp;/event/disks_mounted" Run="/bin/bash"></FILE>
 
 
 <!-- PLUGIN REMOVAL SCRIPT -->
