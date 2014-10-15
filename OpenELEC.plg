@@ -2,6 +2,8 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-15
+			- Eric: Lots of bug fixes, cleanup, and move to GitHub.
 		2014-10-07
 			- Updating naming convention to OpenELEC.
 		2014-10-03
@@ -27,8 +29,9 @@
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
 	<!ENTITY version   "2014.10.15">
-	<!ENTITY vmversion "4.2.1">
-	<!ENTITY pluginURL "http://dnld.lime-technology.com/images/&name;/&name;.plg">
+	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
+	<!ENTITY plugin    "/boot/config/plugins/&name;">
+	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
 ]>
 
 <PLUGIN  name="&name;"
@@ -55,79 +58,23 @@ fi
 </INLINE>
 </FILE>
 
-<!-- PLUGIN ICON -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/&name;.png" Type="base64">
-<INLINE>iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ
-bWFnZVJlYWR5ccllPAAAA2RpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdp
-bj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6
-eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEz
-NDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJo
-dHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlw
-dGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEu
-MC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVz
-b3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1N
-Ok9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDpGMDI2RThBMjNGMjNFMDExOTZCMEJCQzQzRTBD
-MEIyMCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpFQThFRUZCNDIzNDAxMUUwQjU1MEMxODRG
-RTE2RjNGRCIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpFQThFRUZCMzIzNDAxMUUwQjU1MEMx
-ODRGRTE2RjNGRCIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IFdpbmRvd3Mi
-PiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpGMDI2RThBMjNG
-MjNFMDExOTZCMEJCQzQzRTBDMEIyMCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpGMDI2RThB
-MjNGMjNFMDExOTZCMEJCQzQzRTBDMEIyMCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRG
-PiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PlxXYDYAAAFBUExURSMfIP///yMfICMf
-ICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMfICMf
-IJCRkpydnoaHiHh5epKSk4aGh29wcXt8fYqLjJeYmaKio6WmppCRkqSlpXR1doCBgm9vcJ6foIWG
-h5KSk21ub3JzdH5/gIuMjWmbxGmdx2meyWqfymugy2yhzG6jznCl0HFyc3Kn0nSp1HWq1XZ3eHar
-1nit2Hmu2Xqv2nuw23x9fn2y3X+034C14IK34oOEhYO444S55IW65Ya75oiJioi96IqLjIu844y/
-6Y+95I/A6ZDB6ZGSk5G94JLC6ZPA5ZPC6ZW/4ZXD6ZeYmZfE6ZjA4JjD5pjE6ZrB4JrF6ZvB4JzG
-6Z2en53F5qKjpKLI56anp6jL6KrN6K3O6FAxXhwAAAAvdFJOUwAAAQIEBgcICQoMDhEVFhcYGhsc
-HyEkdHR3eH+Ahoa6urq6u7u+vr+/wsLDw8PD7KAEkAAAAkhJREFUSMd1lneb0kAQh0kBNrlwROB6
-7/30gIRAqMeBSJFDBAUVC+aifv8P4IaaMvP+ucz77BN25zfrY+wcmx5O/ZzPgb3+yGh4MC4Jhwmb
-4wbAeCfIIsJhA+Ra4mFhowsL3V3CgsJBA+HKscVSqGJCNRwAhRImlCIEFHRM0KMCKKRQPMLGQbWk
-p1bkKIJpjIcnWzw7EzYPJ/9nSl4RhF8eJFEQTOv31vn2RGGOZudLN2Z+AIicz5x9/FmQ3pLj+f2h
-wmg0eu2CLomcOf/6C7KwLWEwGLzxQBfFZU3Ibxd6vXg8/s/OT7rQ68nLGnoiNqHTSSb/LvmenNDp
-RG01gl1otxXlz5yvyox2GxWaTVV9mfJZXdBsokK9rmm/LT5qNup1VKjVMplvlIyDWg0VKpVcrt/v
-55xUKqhQLhcKz88FF+UyKjxS3j96QYVi8QmgWESFfP4tQD6PCtnsO4BsFhXS6SZAOo0KmtYG0DRU
-UNUPAKqKCoryCUBRUIHe5S8e6KJTOF22qJRIJNwdTZfWFw2k39AG8l8uQkAUHwDWX81btHS7RluU
-IzvX3dl2nOjtaVo/DYHW3V5slYYAwwWl3SsryGjMcKInzGQrZmiQ3e/HZMmKGYZheSKFIzTfUKxM
-jIQlMg0yxlICRBAMLIwNKxNJYBGVc8aYMEbSe4gJQ0Q4wYR7ZKBsteD61j4ysvhzWLiLIUOR3Qan
-XGlPRsYuw58BY06/jWGDnWGDF975drO26nw62OFIKOK+GpGQ63HiNPz0xJ0Q1/PnPxq9yasLKR+e
-AAAAAElFTkSuQmCC</INLINE>
+
+<FILE Name="&plugin;/&version;.tar.gz">
+<URL>https://raw.githubusercontent.com/&author;/&name;/archive/&version;.tar.gz</URL>
 </FILE>
 
-<!-- PLUGIN README.MD FILE -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/README.md">
-<URL>http://dnld.lime-technology.com/images/&name;/README.md</URL>
+
+<FILE Run="/bin/bash">
+<INLINE>
+if [ ! -d &emhttp; ]; then
+	mkdir -p &emhttp;
+fi
+tar -zxf &plugin;/&name;-&version;.tar.gz --strip=1 -C &emhttp;/
+find &plugin; -type f -iname "*.tar.gz" ! -iname "&name;-&version;.tar.gz" -delete
+&emhttp;/event/disks_mounted
+</INLINE>
 </FILE>
 
-<!-- PLUGIN START/STOP PHP PAGE -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/&name;-submit.php">
-<URL>http://dnld.lime-technology.com/images/&name;/&name;-submit.php</URL>
-</FILE>
-
-<!-- PLUGIN PHP PAGE -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/&name;.page">
-<URL>http://dnld.lime-technology.com/images/&name;/&name;.page</URL>
-</FILE>
-
-<!-- PLUGIN unVMs MENU PNG -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/unVMs.png">
-<URL>http://dnld.lime-technology.com/images/&name;/unVMs.png</URL>
-</FILE>
-
-<!-- PLUGIN unVMs MENU PAGE -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/unVMs.page">
-<URL>http://dnld.lime-technology.com/images/&name;/unVMs.page</URL>
-</FILE>
-
-<!-- DOMAIN XML -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/&name;.xml">
-<URL>http://dnld.lime-technology.com/images/&name;/&name;.xml</URL>
-</FILE>
-
-<!-- PLUGIN DISKS MOUNTED EVENT FILE -->
-<FILE Name="/usr/local/emhttp/plugins/&name;/event/disks_mounted" Mode="0770" Run="/bin/bash">
-<URL>http://dnld.lime-technology.com/images/&name;/event/disks_mounted</URL>
-</FILE>
 
 <!-- PLUGIN REMOVAL SCRIPT -->
 <FILE Run="/bin/bash" Method="remove">
