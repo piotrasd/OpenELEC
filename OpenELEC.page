@@ -1,0 +1,228 @@
+Icon="OpenELEC.png"
+Menu="unVMs"
+Title="OpenELEC"
+Type="xmenu"
+---
+<script>
+	function launch(form) {
+		var width    = ((screen.width*2)/3)||0;
+		var height   = ((screen.height*2)/3)||0;
+		var features = "resizeable=yes,scrollbars=yes,width=" + width + ",height=" + height;
+		var myWindow = window.open('', form.target, features);
+		myWindow.focus();
+		form.submit();
+		parent.location = parent.location;
+	}
+</script>
+
+<?php
+
+// DOWNLOAD & UNTAR VDISK IF NECESSARY
+$filename = "/mnt/user/vms/kvm/OpenELEC/OpenELEC-4.2.1-1_LT.img";
+if (!file_exists($filename)) { ?>
+	<form method="POST" action="/logging.htm" target="plgMan">
+		<input type="hidden" name="title" value="OpenELEC VM Download">
+		<input type="hidden" name="cmd" value="/usr/local/emhttp/plugins/OpenELEC/event/disks_mounted">
+		<button type="button" onclick="launch(this.form);">Download VM</button>
+	</form>
+	<?php
+	exit;
+}
+?>
+
+<?
+
+// CREATE HELP CONTENTS
+$help_gpu = <<<EOT
+Select the graphics card device you wish to use with your OpenELEC VM.
+EOT;
+
+$help_audio = <<<EOT
+Select the sound card device you wish to use with your OpenELEC VM.
+EOT;
+
+$help_usb = <<<EOT
+Select the USB devices you wish to use inside your OpenELEC VM.  DO NOT SELECT YOUR UNRAID USB FLASH DEVICE!!!
+EOT;
+
+$help_mac = <<<EOT
+You do not need to modify this field unless you wish to control the exact MAC address that unRAID should use for this OpenELEC virtual machine.
+EOT;
+
+$help = <<<EOT
+Starting the VM will apply the settings you have specified above as well as bind your GPU/audio devices to the vfio-pci driver.
+EOT;
+
+// CREATE ARRAY OF GPU DEVICES
+$gpudevices_wl = array('VGA compatible controller');
+$gpudevices = array();
+$temparray = explode("\n",shell_exec("lspci"));
+foreach($temparray as $tempitem) {
+	list($deviceid,$temp) = explode(" ",trim($tempitem),2);
+	list($devicetype,$devicename) = explode(":",$temp,2);
+	if(in_array($devicetype,$gpudevices_wl)) {
+		$dev_status = shell_exec("lspci -k | grep vfio-pci -B2 | grep ".$deviceid);
+		$gpudevices[] = array(
+			'dev_id' => $deviceid,
+			'dev_type' => $devicetype,
+			'dev_name' => $devicename,
+			'dev_status' => empty($dev_status)
+		);
+	}
+}
+
+// CREATE ARRAY OF AUDIO DEVICES
+$audiodevices_wl = array('Audio device');
+$audiodevices = array();
+$temparray = explode("\n",shell_exec("lspci"));
+foreach($temparray as $tempitem) {
+	list($deviceid,$temp) = explode(" ",trim($tempitem),2);
+	list($devicetype,$devicename) = explode(":",$temp,2);
+	if(in_array($devicetype,$audiodevices_wl)) {
+		$dev_status = shell_exec("lspci -k | grep vfio-pci -B2 | grep ".$deviceid);
+		$audiodevices[] = array(
+			'dev_id' => $deviceid,
+			'dev_type' => $devicetype,
+			'dev_name' => $devicename,
+			'dev_status' => empty($dev_status)
+		);
+	}
+}
+
+// CREATE ARRAY OF USB DEVICES
+$usbBlacklistNames = array('/.* root hub$/', '/^Intel Corp.$/');
+$usbdevices = array();
+$temparray = explode("\n", shell_exec("lsusb"));
+foreach($temparray as $tempitem) {
+	list($temp,$temp2) = explode(": ID ", $tempitem, 2);
+
+	if (empty($temp)) {
+		continue;
+	}
+
+	list($deviceid,$devicename) = explode(" ", $temp2, 2);
+
+	$devicename = trim($devicename);
+
+	foreach ($usbBlacklistNames as $usbblackitem) {
+		if (preg_match($usbblackitem, $devicename) === 1) {
+			continue 2;
+		}
+	}
+
+	if (stripos($GLOBALS['var']['flashGUID'], str_replace(':', '-', $deviceid)) === 0) {
+		continue;
+	}
+
+	$usbdevices[] = array(
+		'dev_id' => $deviceid,
+		'dev_name' => $devicename,
+	);
+}
+
+?>
+
+<?
+	// MAKE SURE THE VM ISN'T RUNNING
+	if (shell_exec ("virsh list | grep OpenELEC" ) == "") {
+
+?>
+
+<!-- FORM START -->
+<form id="execform" target="progressFrame" action="/plugins/OpenELEC/OpenELEC-submit.php" method="POST">
+
+	<!-- ENUMERATE OPTIONS FOR VIDEO SELECTION -->
+	Graphics Card:&nbsp;
+	<select name="gpu">
+	<?php foreach($gpudevices as $x) { ?>
+		<option value="<?php echo $x['dev_id'] ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></option>
+	<?php } ?>
+	</select><br/>
+
+	<!-- HELP FOR VIDEO DEVICES -->
+	<?php
+		echo "<blockquote class='inline_help' style='display: none;'>";
+		echo Markdown($help_gpu);
+		echo "</blockquote>";
+	?>
+
+	<!-- ENUMERATE OPTIONS FOR AUDIO SELECTION -->
+	Sound Card:&nbsp;
+	<select name="audio">
+	<?php foreach($audiodevices as $x) { ?>
+		<option value="<?php echo $x['dev_id'] ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></option>
+	<?php } ?>
+	</select><br/>
+
+	<!-- HELP FOR AUDIO DEVICES -->
+	<?php
+		echo "<blockquote class='inline_help' style='display: none;'>";
+		echo Markdown($help_audio);
+		echo "</blockquote>";
+	?>
+
+	<!-- ENUMERATE OPTIONS FOR USB SELECTION -->
+	<u>USB Devices</u><br/>
+	<?php
+		$y=0;
+		foreach($usbdevices as $x) {
+			$y++; ?>
+		<input type="checkbox" name="usb[]" id="usb<?php echo $y ?>" value="<?php echo $x['dev_id'] ?>"> <label for="usb<?php echo $y ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></label><br/>
+	<?php } ?>
+
+	<!-- HELP FOR USB DEVICES -->
+	<?php
+		echo "<blockquote class='inline_help' style='display: none;'>";
+		echo Markdown($help_usb);
+		echo "</blockquote>";
+	?>
+
+	<!-- MAC ADDRESS SPECIFICATION -->
+	<input type="text" name="mac" value="52:54:00:xx:xx:xx"/><br/>
+
+	<!-- UNRAID BRIDGE GLOBAL VARIABLE PASS -->
+	<input type="hidden" name="bridge" value="<?php echo $GLOBALS['var']['BRNAME'] ?>"/>
+
+	<!-- HELP FOR MAC ADDRESS -->
+	<?php
+		echo "<blockquote class='inline_help' style='display: none;'>";
+		echo Markdown($help_mac);
+		echo "</blockquote>";
+	?>
+
+	<!-- START AND STOP VM -->
+	<input type="submit" value="Start VM"/>
+
+	<!-- JAVASCRIPT FOR VFIO-BIND COMMAND -->
+	<script language="javascript">
+	 function enable_vfio(device) {
+	   document.getElementById('command').value='/usr/local/sbin/vfio-bind ' + '0000:' + device;
+	   document.getElementById('execform').submit();
+	}
+	</script>
+
+	<!-- BLOCKQUOTE FOR RENDERING INLINE HELP -->
+	<?php
+		echo "<blockquote class='inline_help' style='display: none;'>";
+		echo Markdown($help);
+		echo "</blockquote>";
+	?>
+
+</form>
+
+<? } else {
+
+	// IF IT'S NOT RUNNING, GIVE THEM THE OPTION TO SHUT DOWN OR DESTROY
+
+?>
+
+<form id="execform1" target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
+	<input type="hidden" name="command" value="virsh shutdown OpenELEC"/>
+	<input type="submit" value="Stop VM"/>
+</form>
+
+<form id="execform2" target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
+	<input type="hidden" name="command" value="virsh destroy OpenELEC"/>
+	<input type="submit" value="Destroy VM"/>
+</form>
+<? } ?>

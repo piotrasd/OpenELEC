@@ -1,0 +1,20 @@
+#!/bin/sh
+
+DOWNLOAD_PATH="http://dnld.lime-technology.com/images/OpenELEC/OpenELEC-4.2.1-1_LT.tar.xz"
+IMAGE_PATH="/mnt/user/vms/kvm/OpenELEC/"
+IMAGE_FILE="OpenELEC-4.2.1-1_LT.img"
+
+
+# Test to make sure user share exists, otherwise exit
+[ -d /mnt/user ] || exit 1
+
+# Create appdata/OpenELEC folder if needed
+mkdir -p /mnt/user/appdata/OpenELEC/
+
+# Download if the image file doesn't exist
+if [ ! -f "$IMAGE_PATH$IMAGE_FILE" ]; then
+  mkdir -p $IMAGE_PATH
+
+  echo "Downloading OpenELEC image file"
+  curl -s $DOWNLOAD_PATH | pv -i10 -bnW | tar --wildcards --sparse -kxJ -C $IMAGE_PATH *.img
+fi

@@ -1,0 +1,99 @@
+<domain type='kvm' id='2' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+	<name>OpenELEC</name>
+	<memory unit='KiB'>1048576</memory>
+	<currentMemory unit='KiB'>1048576</currentMemory>
+	<memoryBacking>
+		<nosharepages/>
+		<locked/>
+	</memoryBacking>
+	<vcpu placement='static'>2</vcpu>
+		<cputune>
+			<vcpupin vcpu='0' cpuset='0'/>
+			<vcpupin vcpu='1' cpuset='1'/>
+		</cputune>
+	<resource>
+		<partition>/machine</partition>
+	</resource>
+    <os>
+		<type arch='x86_64' machine='pc-q35-2.1'>hvm</type>
+		<boot dev='hd'/>
+		<bootmenu enable='no'/>
+    </os>
+	<features>
+		<acpi/>
+		<apic/>
+	</features>
+	<cpu mode='host-passthrough'>
+		<topology sockets='1' cores='2' threads='1'/>
+	</cpu>
+	<clock offset='localtime'/>
+	<on_poweroff>destroy</on_poweroff>
+	<on_reboot>restart</on_reboot>
+	<on_crash>destroy</on_crash>
+
+	<devices>
+		<emulator>/usr/bin/qemu-system-x86_64</emulator>
+
+		<disk type='file' device='disk'>
+			<driver name='qemu' type='raw'/>
+			<source file='/mnt/user/vms/kvm/OpenELEC/OpenELEC-4.2.1-1_LT.img'/>
+			<target dev='hda' bus='virtio'/>
+			<readonly/>
+		</disk>
+
+		<filesystem type='mount' accessmode='passthrough'>
+			<source dir='/mnt/user'/>
+			<target dir='unraid'/>
+			{{MOUNT_READONLY}}
+		</filesystem>
+
+		<filesystem type='mount' accessmode='passthrough'>
+			<source dir='/mnt/user/appdata/OpenELEC'/>
+			<target dir='storage'/>
+		</filesystem>
+
+		<interface type='bridge'>
+			<mac address='{{NET_MAC}}'/>
+			<source bridge='{{NET_BRIDGE}}'/>
+			<model type='virtio'/>
+			<rom bar='off'/>
+		</interface>
+
+		<!-- BELOW IS REQUIRED -->
+		<controller type='usb' index='0' model='ich9-ehci1'>
+			<alias name='usb0'/>
+			<address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x7'/>
+		</controller>
+		<controller type='usb' index='0' model='ich9-uhci1'>
+			<alias name='usb0'/>
+			<master startport='0'/>
+			<address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x0' multifunction='on'/>
+		</controller>
+		<controller type='usb' index='0' model='ich9-uhci2'>
+			<alias name='usb0'/>
+			<master startport='2'/>
+			<address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x1'/>
+		</controller>
+		<controller type='usb' index='0' model='ich9-uhci3'>
+			<alias name='usb0'/>
+			<master startport='4'/>
+			<address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x2'/>
+		</controller>
+
+		{{USB_DEVICES}}
+
+	</devices>
+
+	<seclabel type='none' model='none'/>
+
+	<qemu:commandline>
+		<qemu:arg value='-device'/>
+		<qemu:arg value='ioh3420,bus=pcie.0,addr=1c.0,multifunction=on,port=1,chassis=1,id=root.1'/>
+		<qemu:arg value='-device'/>
+
+		<!-- MODIFY BELOW LINE AFTER 'host=' BASED ON YOUR GPU DEVICE / AUDIO DEVICE -->
+		<qemu:arg value='vfio-pci,host={{GPU_ADDR}},bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>
+		<qemu:arg value='-device'/>
+		<qemu:arg value='vfio-pci,host={{AUDIO_ADDR}},bus=pcie.0'/>/>
+	</qemu:commandline>
+</domain>
