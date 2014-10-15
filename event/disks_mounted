@@ -1,20 +1,31 @@
 #!/bin/sh
 
-DOWNLOAD_PATH="http://dnld.lime-technology.com/images/OpenELEC/OpenELEC-4.2.1-1_LT.tar.xz"
-IMAGE_PATH="/mnt/user/vms/kvm/OpenELEC/"
-IMAGE_FILE="OpenELEC-4.2.1-1_LT.img"
+NAME="OpenELEC-4.2.1-1_LT"
+DOWNLOAD_PATH="http://dnld.lime-technology.com/images/OpenELEC/$NAME.tar.xz"
+IMAGE_PATH="/mnt/user/vms/kvm/OpenELEC"
 
 
 # Test to make sure user share exists, otherwise exit
 [ -d /mnt/user ] || exit 1
 
 # Create appdata/OpenELEC folder if needed
-mkdir -p /mnt/user/appdata/OpenELEC/
+[ -d /mnt/user/appdata/OpenELEC/ ] || mkdir -p /mnt/user/appdata/OpenELEC/
+
+# Create vms/kvm/OpenELEC folder if needed
+[ -d "$IMAGE_PATH" ] || mkdir -p "$IMAGE_PATH"
+
+# Check for partial downloaded files, cleanup if so
+if [ -f "$IMAGE_PATH/$NAME.img.INPROGRESS" ]; then
+	if [ -f "$IMAGE_PATH/$NAME.img" ]; then
+		rm "$IMAGE_PATH/$NAME.img" || echo "Failed to cleanup old OpenELEC image file.  Is it locked by another process?"; exit 1
+	fi
+	rm "$IMAGE_PATH/$NAME.img.INPROGRESS"
+fi
 
 # Download if the image file doesn't exist
-if [ ! -f "$IMAGE_PATH$IMAGE_FILE" ]; then
-  mkdir -p $IMAGE_PATH
-
+if [ ! -f "$IMAGE_PATH/$NAME.img" ]; then
+  touch "$IMAGE_PATH/$NAME.img.INPROGRESS"
   echo "Downloading OpenELEC image file"
-  curl -s $DOWNLOAD_PATH | pv -i10 -bnW | tar --wildcards --sparse -kxJ -C $IMAGE_PATH *.img
+  curl -s $DOWNLOAD_PATH | pv -i10 -bnW | tar --wildcards --sparse -kxJ -C $IMAGE_PATH/ *.img
+  rm "$IMAGE_PATH/$NAME.img.INPROGRESS"
 fi
