@@ -69,8 +69,7 @@ fi
 if [ ! -d &emhttp; ]; then
 	mkdir -p &emhttp;
 fi
-tar -zxf &plugin;/&name;-&version;.tar.gz --strip=1 -C &emhttp;/
-find &plugin; -type f -iname "*.tar.gz" ! -iname "&name;-&version;.tar.gz" -delete
+tar -zxf &plugin;/&version;.tar.gz --strip=1 -C &emhttp;/
 &emhttp;/event/disks_mounted
 </INLINE>
 </FILE>
