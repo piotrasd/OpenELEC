@@ -1,7 +1,7 @@
 <?php
 
-$varGPU = $_POST['gpu'];
-$varAudio = $_POST['audio'];
+$varGPU = empty($_POST['gpu']) ? '' : $_POST['gpu'];
+$varAudio = empty($_POST['audio']) ? '' : $_POST['audio'];
 $varUSBList = empty($_POST['usb']) ? [] : $_POST['usb'];
 $varMAC = empty($_POST['mac']) ? '52:54:00:xx:xx:xx' : $_POST['mac'];
 $varBridge = $_POST['bridge'];
@@ -17,13 +17,41 @@ for ($i=0; $i < 6; $i++) {
 	}
 }
 $varMAC = implode(':', $varMACparts);
+echo 'MAC address set to ' . $varMAC . PHP_EOL;
 
 
 // VFIO the GPU and Audio
-passthru('/usr/local/sbin/vfio-bind 0000:' . $varGPU . ' 0000:' . $varAudio);
+$arrPassthruDevices = array_filter([$varGPU, $varAudio]);
+foreach ($arrPassthruDevices as $strPassthruDevice) {
+	// Ensure we have leading 0000:
+	$strPassthruDevice = '0000:' . str_replace('0000:', '', $strPassthruDevice);
+
+	// Determine the driver currently assigned to the device
+	$strDriverSymlink = readlink('/sys/bus/pci/devices/' . $strPassthruDevice . '/driver');
+
+ 	if ($strDriverSymlink == '/sys/bus/pci/drivers/vfio-pci/') {
+ 		// Driver bound to vfio-pci already
+  		echo 'Device ' . str_replace('0000:', '', $strPassthruDevice) . ' already using vfio-pci driver' . PHP_EOL;
+ 		continue;
+ 	} else if ($strDriverSymlink !== false) {
+ 		// Driver bound to some other driver
+ 		// Attempt to unbind driver
+ 		echo 'Unbind device ' . str_replace('0000:', '', $strPassthruDevice) . ' from current driver...' . PHP_EOL;
+ 		file_put_contents('/sys/bus/pci/devices/' . $strPassthruDevice . '/driver/unbind', $strPassthruDevice);
+	}
+
+	// Get Vendor and Device IDs for the passthru device
+	$strVendor = file_get_contents('/sys/bus/pci/devices/' . $strPassthruDevice . '/vendor');
+	$strDevice = file_get_contents('/sys/bus/pci/devices/' . $strPassthruDevice . '/device');
+
+	// Attempt to bind driver to vfio-pci
+ 	echo 'Binding device ' . str_replace('0000:', '', $strPassthruDevice) . ' to vfio-pci driver...' . PHP_EOL;
+	file_put_contents('/sys/bus/pci/drivers/vfio-pci/new_id', $strVendor . ' ' . $strDevice);
+}
 
 
 // Open the seed xml
+echo 'Parsing seed xml file...' . PHP_EOL;
 $strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
 
 
@@ -54,10 +82,12 @@ $strXMLFile = str_replace('{{USB_DEVICES}}', $varUSBDevices, $strXMLFile);
 
 
 // Save the modified xml to the tmp folder
+echo 'Saving generated xml file...' . PHP_EOL;
 file_put_contents('/tmp/OpenELEC.xml', $strXMLFile);
 
 // Ensure NODATACOW is set to all KVM images
 // passthru('chattr +C /mnt/cache/vms/kvm/');
 
 // Start the VM
+echo 'Starting VM...' . PHP_EOL;
 passthru('virsh create /tmp/OpenELEC.xml');
