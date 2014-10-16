@@ -2,6 +2,8 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-16b
+			- Eric: minor tweaks to xml to bump version again
 		2014-10-16a
 			- Eric: hide empty usb devices
 			- Eric: better wait code for shutdown/destroy
@@ -41,7 +43,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.16a">
+	<!ENTITY version   "2014.10.16b">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">

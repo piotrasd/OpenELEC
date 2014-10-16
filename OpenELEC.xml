@@ -7,10 +7,10 @@
 		<locked/>
 	</memoryBacking>
 	<vcpu placement='static'>2</vcpu>
-		<cputune>
-			<vcpupin vcpu='0' cpuset='0'/>
-			<vcpupin vcpu='1' cpuset='1'/>
-		</cputune>
+	<cputune>
+		<vcpupin vcpu='0' cpuset='0'/>
+		<vcpupin vcpu='1' cpuset='1'/>
+	</cputune>
 	<resource>
 		<partition>/machine</partition>
 	</resource>
@@ -81,7 +81,6 @@
 		</controller>
 
 		{{USB_DEVICES}}
-
 	</devices>
 
 	<seclabel type='none' model='none'/>
