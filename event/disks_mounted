@@ -6,7 +6,7 @@ IMAGE_PATH="/mnt/user/vms/kvm/OpenELEC"
 
 
 # Test to make sure user share exists, otherwise exit
-[ -d /mnt/user ] || exit 1
+[ -d /mnt/user ] || exit 0
 
 # Create appdata/OpenELEC folder if needed
 [ -d /mnt/user/appdata/OpenELEC/ ] || mkdir -p /mnt/user/appdata/OpenELEC/
