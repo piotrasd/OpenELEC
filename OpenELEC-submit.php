@@ -1,11 +1,17 @@
 <?php
 
+require_once('/usr/local/emhttp/update.php');
+
+
 $varGPU = empty($_POST['gpu']) ? '' : $_POST['gpu'];
 $varAudio = empty($_POST['audio']) ? '' : $_POST['audio'];
 $varUSBList = empty($_POST['usb']) ? [] : $_POST['usb'];
 $varMAC = empty($_POST['mac']) ? '52:54:00:xx:xx:xx' : $_POST['mac'];
 $varBridge = $_POST['bridge'];
 $varReadonly = empty($_POST['readonly']) ? '' : '<readonly/>';
+
+
+
 
 
 // Replace wildcard chars in MAC
@@ -17,7 +23,6 @@ for ($i=0; $i < 6; $i++) {
 	}
 }
 $varMAC = implode(':', $varMACparts);
-echo 'MAC address set to ' . $varMAC . PHP_EOL;
 
 
 // VFIO the GPU and Audio
@@ -27,17 +32,23 @@ foreach ($arrPassthruDevices as $strPassthruDevice) {
 	$strPassthruDevice = '0000:' . str_replace('0000:', '', $strPassthruDevice);
 
 	// Determine the driver currently assigned to the device
-	$strDriverSymlink = readlink('/sys/bus/pci/devices/' . $strPassthruDevice . '/driver');
+	$strDriverSymlink = @readlink('/sys/bus/pci/devices/' . $strPassthruDevice . '/driver');
 
  	if ($strDriverSymlink == '/sys/bus/pci/drivers/vfio-pci/') {
  		// Driver bound to vfio-pci already
-  		echo 'Device ' . str_replace('0000:', '', $strPassthruDevice) . ' already using vfio-pci driver' . PHP_EOL;
+  		write_log('Device ' . str_replace('0000:', '', $strPassthruDevice) . ' already using vfio-pci driver<br>');
  		continue;
  	} else if ($strDriverSymlink !== false) {
  		// Driver bound to some other driver
  		// Attempt to unbind driver
- 		echo 'Unbind device ' . str_replace('0000:', '', $strPassthruDevice) . ' from current driver...' . PHP_EOL;
- 		file_put_contents('/sys/bus/pci/devices/' . $strPassthruDevice . '/driver/unbind', $strPassthruDevice);
+ 		write_log('Unbinding device ' . str_replace('0000:', '', $strPassthruDevice) . ' from current driver...');
+ 		if (file_put_contents('/sys/bus/pci/devices/' . $strPassthruDevice . '/driver/unbind', $strPassthruDevice) === false) {
+			write_log('FAILED');
+			sleep(5);
+			exit(1);
+		} else {
+			write_log('Ok<br>');
+ 		}
 	}
 
 	// Get Vendor and Device IDs for the passthru device
@@ -45,13 +56,20 @@ foreach ($arrPassthruDevices as $strPassthruDevice) {
 	$strDevice = file_get_contents('/sys/bus/pci/devices/' . $strPassthruDevice . '/device');
 
 	// Attempt to bind driver to vfio-pci
- 	echo 'Binding device ' . str_replace('0000:', '', $strPassthruDevice) . ' to vfio-pci driver...' . PHP_EOL;
-	file_put_contents('/sys/bus/pci/drivers/vfio-pci/new_id', $strVendor . ' ' . $strDevice);
+ 	write_log('Binding device ' . str_replace('0000:', '', $strPassthruDevice) . ' to vfio-pci driver...');
+	if (file_put_contents('/sys/bus/pci/drivers/vfio-pci/new_id', $strVendor . ' ' . $strDevice) === false) {
+		write_log('FAILED');
+		sleep(5);
+		exit(1);
+	} else {
+		write_log('Ok<br>');
+	}
+
 }
 
 
 // Open the seed xml
-echo 'Parsing seed xml file...' . PHP_EOL;
+write_log('Parsing seed xml file...<br>');
 $strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
 
 
@@ -82,12 +100,19 @@ $strXMLFile = str_replace('{{USB_DEVICES}}', $varUSBDevices, $strXMLFile);
 
 
 // Save the modified xml to the tmp folder
-echo 'Saving generated xml file...' . PHP_EOL;
-file_put_contents('/tmp/OpenELEC.xml', $strXMLFile);
+write_log('Saving generated xml file...');
+if (file_put_contents('/tmp/OpenELEC.xml', $strXMLFile) === false) {
+	write_log('FAILED');
+	sleep(5);
+	exit(1);
+} else {
+	write_log('Ok<br>');
+}
 
 // Ensure NODATACOW is set to all KVM images
 // passthru('chattr +C /mnt/cache/vms/kvm/');
 
 // Start the VM
-echo 'Starting VM...' . PHP_EOL;
-passthru('virsh create /tmp/OpenELEC.xml');
+write_log('Starting VM...<br>');
+write_log(exec('virsh create /tmp/OpenELEC.xml'));
+sleep(5);

@@ -25,7 +25,7 @@ fi
 # Download if the image file doesn't exist
 if [ ! -f "$IMAGE_PATH/$NAME.img" ]; then
   touch "$IMAGE_PATH/$NAME.img.INPROGRESS"
-  echo "Downloading OpenELEC image file"
-  curl -s $DOWNLOAD_PATH | pv -i10 -bnW | tar --wildcards --sparse -kxJ -C $IMAGE_PATH/ *.img
+  echo "Downloading OpenELEC image file..."
+  curl -s $DOWNLOAD_PATH | pv -i3 -bnW | tar --wildcards --sparse -kxJ -C $IMAGE_PATH/ *.img
   rm "$IMAGE_PATH/$NAME.img.INPROGRESS"
 fi

@@ -2,6 +2,13 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-16 - Eric:
+			- improved styling
+			- added readonly option
+			- better status reporting if the VM is downloaded, running or stopped
+			- PCIE ACS check
+			- download status reports every 3 sec instead of 10
+			- bump version up to 2014.10.16
 		2014-10-15a
 			- Eric: Removed network code block and added more safety checks for disks_mounted event script
 		2014-10-15
@@ -30,7 +37,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.15c">
+	<!ENTITY version   "2014.10.16">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
