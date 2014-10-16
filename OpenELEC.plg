@@ -2,6 +2,10 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-16a
+			- Eric: hide empty usb devices
+			- Eric: better wait code for shutdown/destroy
+			- Eric: fixed xml syntax errors
 		2014-10-16 - Eric:
 			- improved styling
 			- added readonly option

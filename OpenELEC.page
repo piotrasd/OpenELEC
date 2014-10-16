@@ -83,12 +83,12 @@ return;
 // MAKE SURE THE VM ISN'T RUNNING
 if ($boolRunning) { ?>
 <form target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
-	<input type="hidden" name="command" value="virsh shutdown OpenELEC && sleep 10"/>
+	<input type="hidden" name="command" value="virsh shutdown OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
 	<input type="submit" value="Stop VM"/>
 </form>
 
 <form target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
-	<input type="hidden" name="command" value="virsh destroy OpenELEC && sleep 10"/>
+	<input type="hidden" name="command" value="virsh destroy OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
 	<input type="submit" value="Destroy VM"/>
 </form>
 
@@ -137,6 +137,10 @@ foreach ($temparray as $tempitem) {
 	list($deviceid, $devicename) = explode(" ", $temp2, 2);
 
 	$devicename = trim($devicename);
+
+	if (empty($devicename)) {
+		continue;
+	}
 
 	foreach ($usbBlacklistNames as $usbblackitem) {
 		if (preg_match($usbblackitem, $devicename) === 1) {
