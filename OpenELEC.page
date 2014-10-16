@@ -26,11 +26,17 @@ if (!file_exists($filename)) { ?>
 		<button type="button" onclick="launch(this.form);">Download VM</button>
 	</form>
 	<?php
-	exit;
+	return;
 }
-?>
 
-<?
+
+// Check for PCIE ACS capabilities
+if (strpos(file_get_contents('/proc/cmdline'), 'pcie_acs_override=') === false) { ?>
+	<p class="notice">You must include a pcie_acs_override kernel append line</p>
+	<?php
+	return;
+}
+
 
 // CREATE HELP CONTENTS
 $help_gpu = <<<EOT
