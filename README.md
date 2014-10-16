@@ -1,4 +1,4 @@
-####OpenELEC unVM####
+####OpenELEC unVM Beta####
 Open Embedded Linux Entertainment Center (OpenELEC) is a small Linux distribution built from scratch as a platform to turn your computer into an XBMC media center.  An unVM is different from a traditional VM in its ability to have direct I/O interaction with underlying physical hardware such as PCI and USB devices (video/audio devices, mice, keyboards, or even a [Flirc](http://flirc.tv "Flirc")).  As an unVM, OpenELEC can now run on any unRAID 6 server that has capable hardware.  No "install" required, just download and run!  Now your unRAID server can also be your media player!
 
 After starting your OpenELEC unVM, you can access your media by adding files, selecting "root filesystem", and then browsing to "/unraid".  From there, you will see all your user shares and can browse to where you want to add your relevant media content.  Enjoy!
