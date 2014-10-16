@@ -7,15 +7,15 @@ Type="xmenu"
 
 // CREATE HELP CONTENTS
 $help_gpu = <<<EOT
-Select the graphics card device you wish to use with your OpenELEC VM.
+Select the graphics card device you wish to use with your OpenELEC VM.  Presently we only support AMD and nVIDIA GPUs and the exact list of supported devices is still growing.  We do not support the assignment of on-board graphics at this time.
 EOT;
 
 $help_audio = <<<EOT
-Select the sound card device you wish to use with your OpenELEC VM.
+Select the sound card device you wish to use with your OpenELEC VM.  For most GPUs, audio can be done through HDMI or with a DVI to HDMI adapter.  For those wishing to use their on-board audio as opposed to their HDMI audio, select device 00:1b.0, if available.
 EOT;
 
 $help_usb = <<<EOT
-Select the USB devices you wish to use inside your OpenELEC VM.  DO NOT SELECT YOUR UNRAID USB FLASH DEVICE!!!
+Select the USB devices you wish to use inside your OpenELEC VM.  We have hidden your unRAID USB Flash Device for your protection.  Not all USB devices work for this yet.
 EOT;
 
 $help_mac = <<<EOT
@@ -26,10 +26,21 @@ $help_readonly = <<<EOT
 Check this option to prevent OpenELEC write access to your unRAID array.
 EOT;
 
-$help = <<<EOT
+$help_readonly = <<<EOT
+Check this option to prevent OpenELEC write access to your unRAID array.
+EOT;
+
+$help_startvm = <<<EOT
 Starting the VM will apply the settings you have specified above as well as bind your GPU/audio devices to the vfio-pci driver.
 EOT;
 
+$help_stopvm = <<<EOT
+Click this button to stop OpenELEC.
+EOT;
+
+$help_forcevm = <<<EOT
+Click this button to force OpenELEC to shutdown immediately (use if VM is stuck in hung state).
+EOT;
 
 $boolInstalled = file_exists("/mnt/user/vms/kvm/OpenELEC/OpenELEC-4.2.1-1_LT.img");
 $boolRunning = (shell_exec("virsh list | grep OpenELEC") != "");
@@ -87,10 +98,20 @@ if ($boolRunning) { ?>
 	<input type="submit" value="Stop VM"/>
 </form>
 
+<!-- HELP FOR STOP VM -->
+<blockquote class="inline_help">
+<?php echo Markdown($help_stopvm); ?>
+</blockquote>
+
 <form target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
 	<input type="hidden" name="command" value="virsh destroy OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
-	<input type="submit" value="Destroy VM"/>
+	<input type="submit" value="Force Shutdown VM"/>
 </form>
+
+<!-- HELP FOR FORCE STOP VM -->
+<blockquote class="inline_help">
+<?php echo Markdown($help_forcevm); ?>
+</blockquote>
 
 <?php
 return;
@@ -216,7 +237,7 @@ foreach ($temparray as $tempitem) {
 		<dd>
 			<input type="text" name="mac" value="52:54:00:xx:xx:xx"/>
 
-			<!-- HELP FOR MAC ADDRESS -->
+		<!-- HELP FOR MAC ADDRESS -->
 			<blockquote class="inline_help">
 			<?php echo Markdown($help_mac); ?>
 			</blockquote>
@@ -230,7 +251,7 @@ foreach ($temparray as $tempitem) {
 		<dd>
 			<input type="checkbox" name="readonly" id="readonly" value="1" checked="checked"> <label for="readonly">Prevent OpenELEC write access to your media files</label>
 
-			<!-- HELP FOR MAC ADDRESS -->
+			<!-- HELP FOR MEDIA READ-ONLY -->
 			<blockquote class="inline_help">
 			<?php echo Markdown($help_readonly); ?>
 			</blockquote>
@@ -243,7 +264,7 @@ foreach ($temparray as $tempitem) {
 
 			<!-- BLOCKQUOTE FOR RENDERING INLINE HELP -->
 			<blockquote class="inline_help">
-			<?php echo Markdown($help); ?>
+			<?php echo Markdown($help_startvm); ?>
 			</blockquote>
 		</dd>
 
