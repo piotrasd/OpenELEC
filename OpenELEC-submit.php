@@ -6,7 +6,7 @@ function write_log($string) {
 	syslog(LOG_INFO, "OpenELEC plugin: " . trim(str_replace('<br>', '', $string)));
 }
 
-function write_display($string, $failure) {
+function write_display($string, $failure = false) {
 	if ($failure) {
 		$string = '<span style="color: #FF0000">' . $string . '</span>';
 	}
