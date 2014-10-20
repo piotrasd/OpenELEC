@@ -84,8 +84,36 @@ return;
 }
 
 // Check for PCIE ACS capabilities
-if (!$boolACSEnabled) { ?>
-<p class="notice">You must include a <b>pcie_acs_override=downstream</b> kernel append parameter in your syslinux.cfg</p>
+if (!$boolACSEnabled) {
+	// Check the /boot/syslinux/syslinux.cfg for the existance of pcie_acs_override=downstream, add it in if not found
+	$arrSyslinuxCfg = file('/boot/syslinux/syslinux.cfg');
+	$strCurrentLabel = '';
+	$boolModded = false;
+	foreach ($arrSyslinuxCfg as &$strSyslinuxCfg) {
+		if (stripos(trim($strSyslinuxCfg), 'label ') === 0) {
+			$strCurrentLabel = trim(str_ireplace('label ', '', $strSyslinuxCfg));
+		}
+		if (stripos($strSyslinuxCfg, 'append ') !== false) {
+			if (stripos($strSyslinuxCfg, 'pcie_acs_override=') === false) {
+				// pcie_acs_override=downstream was not found so append it in
+				$strSyslinuxCfg = str_ireplace('append ', 'append pcie_acs_override=downstream ', $strSyslinuxCfg);
+				$boolModded = true;
+			}
+
+			// We just modify the first append line, other boot menu items are untouched
+			break;
+		}
+	}
+
+	if ($boolModded) {
+		// Backup syslinux.cfg
+		copy('/boot/syslinux/syslinux.cfg', '/boot/syslinux/syslinux.cfg-');
+
+		// Write Changes to syslinux.cfg
+		file_put_contents('/boot/syslinux/syslinux.cfg', implode('', $arrSyslinuxCfg));
+	}
+?>
+<p class="notice">You must reboot in to <b><?=$strCurrentLabel?></b> mode for changes to take effect for OpenELEC to operate</p>
 
 <?php
 return;
