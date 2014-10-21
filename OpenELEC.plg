@@ -2,6 +2,10 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-21
+			- Eric: refactored a bunch of device detection code
+			- Eric: handled cases for empty lists of pci/usb devices
+			- Eric: now at least 1 video device is required otherwise show error about iommu support
 		2014-10-20a
 			- Eric: automatically add pcie_acs_override to syslinux.cfg if missing
 		2014-10-20
@@ -50,7 +54,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.20a">
+	<!ENTITY version   "2014.10.21">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">

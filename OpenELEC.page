@@ -147,64 +147,74 @@ return;
 
 
 // CREATE ARRAY OF GPU/AUDIO DEVICES
-$gpudevices_wl = array('VGA compatible controller');
-$gpudevices = array();
-$audiodevices_wl = array('Audio device');
-$audiodevices = array();
-$temparray = explode("\n", shell_exec("lspci"));
-foreach ($temparray as $tempitem) {
-	list($deviceid, $temp) = explode(" ", trim($tempitem), 2);
-	list($devicetype, $devicename) = explode(":", $temp, 2);
+$arrWhitelistGPUNames = array('VGA compatible controller');
+$arrWhitelistAudioNames = array('Audio device');
+$arrValidGPUDevices = array();
+$arrValidAudioDevices = array();
+exec("lspci", $arrAllPCIDevices);
+foreach ($arrAllPCIDevices as $strPCIDevice) {
+	if (preg_match('/^(?P<id>\S+) (?P<type>.+): (?P<name>.+)$/', $strPCIDevice, $arrMatch)) {
+		if (in_array($arrMatch['type'], $arrWhitelistGPUNames)) {
+			$arrName = 'arrValidGPUDevices';
+		} else if (in_array($arrMatch['type'], $arrWhitelistAudioNames)) {
+			$arrName = 'arrValidAudioDevices';
+		} else {
+			// Not in either whitelist, skip device
+			continue;
+		}
 
-	if (in_array($devicetype, $gpudevices_wl)) {
-		$arrName = 'gpudevices';
-	} else if (in_array($devicetype, $audiodevices_wl)) {
-		$arrName = 'audiodevices';
-	} else {
-		continue;
+		if (!file_exists('/sys/bus/pci/devices/0000:' . $arrMatch['id'] . '/iommu_group/')) {
+			// No IOMMU support for device, skip device
+			continue;
+		}
+
+		${$arrName}[] = array(
+			'dev_id' => $arrMatch['id'],
+			'dev_type' => $arrMatch['type'],
+			'dev_name' => $arrMatch['name']
+		);
 	}
+}
 
-	${$arrName}[] = array(
-		'dev_id' => $deviceid,
-		'dev_type' => $devicetype,
-		'dev_name' => $devicename,
-		'dev_status' => (shell_exec("lspci -k | grep vfio-pci -B2 | grep " . $deviceid) == "")
-	);
+// Check for available video devices, one is required
+if (empty($arrValidGPUDevices)) {
+?>
+<p class="notice">This VM requires a valid graphics device and hardware capable of Intel VT-d or AMD Vi.  If you think you are receiving this message in error, please check your BIOS settings.</p>
+
+<?php
+return;
 }
 
 // CREATE ARRAY OF USB DEVICES
-$usbBlacklistNames = array('/.* root hub$/', '/^Intel Corp.$/');
-$usbdevices = array();
-$temparray = explode("\n", shell_exec("lsusb"));
-foreach ($temparray as $tempitem) {
-	list($temp, $temp2) = explode(": ID ", $tempitem, 2);
+$arrBlacklistUSBNames = array('/.* root hub$/', '/^Intel Corp.$/');
+$arrValidUSBDevices = array();
+exec("lsusb", $arrAllUSBDevices);
+foreach ($arrAllUSBDevices as $strUSBDevice) {
+	if (preg_match('/^.+ID (?P<id>\S+) (?P<name>.+)$/', $strUSBDevice, $arrMatch)) {
+		$arrMatch['name'] = trim($arrMatch['name']);
 
-	if (empty($temp)) {
-		continue;
-	}
-
-	list($deviceid, $devicename) = explode(" ", $temp2, 2);
-
-	$devicename = trim($devicename);
-
-	if (empty($devicename)) {
-		continue;
-	}
-
-	foreach ($usbBlacklistNames as $usbblackitem) {
-		if (preg_match($usbblackitem, $devicename) === 1) {
-			continue 2;
+		if (empty($arrMatch['name'])) {
+			// Device name is blank, skip device
+			continue;
 		}
-	}
 
-	if (stripos($GLOBALS['var']['flashGUID'], str_replace(':', '-', $deviceid)) === 0) {
-		continue;
-	}
+		foreach ($arrBlacklistUSBNames as $strBlacklistUSBName) {
+			if (preg_match($strBlacklistUSBName, $arrMatch['name'])) {
+				// Device name matches a blacklist item, skip device
+				continue 2;
+			}
+		}
 
-	$usbdevices[] = array(
-		'dev_id' => $deviceid,
-		'dev_name' => $devicename,
-	);
+		if (stripos($GLOBALS['var']['flashGUID'], str_replace(':', '-', $arrMatch['id'])) === 0) {
+			// Device id matches the unraid device, skip device
+			continue;
+		}
+
+		$arrValidUSBDevices[] = array(
+			'dev_id' => $arrMatch['id'],
+			'dev_name' => $arrMatch['name'],
+		);
+	}
 }
 
 ?>
@@ -217,11 +227,16 @@ foreach ($temparray as $tempitem) {
 		<!-- ENUMERATE OPTIONS FOR VIDEO SELECTION -->
 		<dt>Graphics Card:</dt>
 		<dd>
+		<?php if (!empty($arrValidGPUDevices)) { ?>
 			<select name="gpu">
-			<?php foreach($gpudevices as $x) { ?>
+			<?php foreach($arrValidGPUDevices as $x) { ?>
 				<option value="<?php echo $x['dev_id'] ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></option>
 			<?php } ?>
 			</select>
+		<?php } else { ?>
+			<input type="hidden" name="gpu" value="">
+			<i>None available</i>
+		<?php } ?>
 
 			<!-- HELP FOR VIDEO DEVICES -->
 			<blockquote class="inline_help">
@@ -232,11 +247,16 @@ foreach ($temparray as $tempitem) {
 		<!-- ENUMERATE OPTIONS FOR AUDIO SELECTION -->
 		<dt>Sound Card:</dt>
 		<dd>
+		<?php if (!empty($arrValidAudioDevices)) { ?>
 			<select name="audio">
-			<?php foreach($audiodevices as $x) { ?>
+			<?php foreach($arrValidAudioDevices as $x) { ?>
 				<option value="<?php echo $x['dev_id'] ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></option>
 			<?php } ?>
 			</select>
+		<?php } else { ?>
+			<input type="hidden" name="audio" value="">
+			<i>None available</i>
+		<?php } ?>
 
 			<!-- HELP FOR AUDIO DEVICES -->
 			<blockquote class="inline_help">
@@ -247,12 +267,15 @@ foreach ($temparray as $tempitem) {
 		<!-- ENUMERATE OPTIONS FOR USB SELECTION -->
 		<dt>USB Devices:</dt>
 		<dd>
-			<?php
+		<?php if (!empty($arrValidUSBDevices)) {
 				$y=0;
-				foreach($usbdevices as $x) {
-					$y++; ?>
-				<input type="checkbox" name="usb[]" id="usb<?php echo $y ?>" value="<?php echo $x['dev_id'] ?>"> <label for="usb<?php echo $y ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></label><br/>
-			<?php } ?>
+				foreach($arrValidUSBDevices as $x) { ?>
+				<input type="checkbox" name="usb[]" id="usb<?php echo ++$y ?>" value="<?php echo $x['dev_id'] ?>"> <label for="usb<?php echo $y ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></label><br/>
+			<?php }
+		} else { ?>
+			<input type="hidden" name="usb[]" value="">
+			<i>None available</i>
+		<?php } ?>
 
 			<!-- HELP FOR USB DEVICES -->
 			<blockquote class="inline_help">
