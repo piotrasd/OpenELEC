@@ -18,10 +18,6 @@ $help_usb = <<<EOT
 Select the USB devices you wish to use inside your OpenELEC VM.  We have hidden your unRAID USB Flash Device for your protection.  Not all USB devices work for this yet.
 EOT;
 
-$help_mac = <<<EOT
-You do not need to modify this field unless you wish to control the exact MAC address that unRAID should use for this OpenELEC virtual machine.
-EOT;
-
 $help_readonly = <<<EOT
 Check this option to prevent OpenELEC write access to your unRAID array.
 EOT;
@@ -280,17 +276,6 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<!-- HELP FOR USB DEVICES -->
 			<blockquote class="inline_help">
 			<?php echo Markdown($help_usb); ?>
-			</blockquote>
-		</dd>
-
-		<!-- MAC ADDRESS SPECIFICATION -->
-		<dt>MAC Address:</dt>
-		<dd>
-			<input type="text" name="mac" value="52:54:00:xx:xx:xx"/>
-
-		<!-- HELP FOR MAC ADDRESS -->
-			<blockquote class="inline_help">
-			<?php echo Markdown($help_mac); ?>
 			</blockquote>
 		</dd>
 
