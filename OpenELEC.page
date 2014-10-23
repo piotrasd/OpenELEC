@@ -42,41 +42,15 @@ $boolInstalled = file_exists("/mnt/user/vms/kvm/OpenELEC/OpenELEC-4.2.1-1_LT.img
 $boolRunning = (shell_exec("virsh list | grep OpenELEC") != "");
 $boolACSEnabled = (strpos(file_get_contents('/proc/cmdline'), 'pcie_acs_override=') !== false);
 
-?>
-
-<script>
-	function launch(form) {
-		var width    = ((screen.width*2)/3)||0;
-		var height   = ((screen.height*2)/3)||0;
-		var features = "resizeable=yes,scrollbars=yes,width=" + width + ",height=" + height;
-		var myWindow = window.open('', form.target, features);
-		myWindow.focus();
-		form.submit();
-		parent.location = parent.location;
-	}
-</script>
-
-<?php
 
 if (!$boolInstalled) {
-	?><span class="red"><b>OpenELEC is NOT INSTALLED</b></span><?php
-} else if (!$boolRunning) {
-	?><span class="red"><b>OpenELEC is NOT RUNNING</b></span><?php
-} else {
-	?><span class="green"><b>OpenELEC is RUNNING</b></span><?php
-}
-
-
-// DOWNLOAD & UNTAR VDISK IF NECESSARY
-if (!$boolInstalled) { ?>
-<form method="POST" action="/logging.htm" target="OpenELEC">
-	<input type="hidden" name="title" value="OpenELEC VM Download">
-	<input type="hidden" name="cmd" value="/usr/local/emhttp/plugins/OpenELEC/event/disks_mounted">
-	<button type="button" onclick="launch(this.form);">Download VM</button>
-</form>
-
-<?php
+?><span class="red"><b>OpenELEC is NOT INSTALLED</b></span>
+<p class="notice">OpenELEC image file is missing because the array isn't started or the image was deleted manually.  You can (re)start the array to automatically download the OpenELEC image file again.</p><?php
 return;
+} else if (!$boolRunning) {
+?><span class="red"><b>OpenELEC is NOT RUNNING</b></span><?php
+} else {
+?><span class="green"><b>OpenELEC is RUNNING</b></span><?php
 }
 
 // Check for PCIE ACS capabilities
@@ -108,34 +82,29 @@ if (!$boolACSEnabled) {
 		// Write Changes to syslinux.cfg
 		file_put_contents('/boot/syslinux/syslinux.cfg', implode('', $arrSyslinuxCfg));
 	}
-?>
-<p class="notice">You must reboot in to <b><?=$strCurrentLabel?></b> mode for changes to take effect for OpenELEC to operate</p>
 
-<?php
-return;
+	?><p class="notice">You must reboot in to <b><?=$strCurrentLabel?></b> mode for changes to take effect for OpenELEC to operate</p><?php
+
+	return;
 }
 
 // MAKE SURE THE VM ISN'T RUNNING
 if ($boolRunning) { ?>
-<form target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
-	<input type="hidden" name="command" value="virsh shutdown OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
+<form target="progressFrame" action="/update.php" method="POST">
+	<input type="hidden" name="#command" value="virsh shutdown OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
 	<input type="submit" value="Stop VM"/>
 </form>
 
 <!-- HELP FOR STOP VM -->
-<blockquote class="inline_help">
-<?php echo Markdown($help_stopvm); ?>
-</blockquote>
+<blockquote class="inline_help"><?=Markdown($help_stopvm)?></blockquote>
 
-<form target="progressFrame" action="/plugins/webGui/exec.php" method="POST">
-	<input type="hidden" name="command" value="virsh destroy OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
+<form target="progressFrame" action="/update.php" method="POST">
+	<input type="hidden" name="#command" value="virsh destroy OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
 	<input type="submit" value="Force Shutdown VM"/>
 </form>
 
 <!-- HELP FOR FORCE STOP VM -->
-<blockquote class="inline_help">
-<?php echo Markdown($help_forcevm); ?>
-</blockquote>
+<blockquote class="inline_help"><?=Markdown($help_forcevm)?></blockquote>
 
 <?php
 return;
@@ -173,8 +142,7 @@ foreach ($arrAllPCIDevices as $strPCIDevice) {
 }
 
 // Check for available video devices, one is required
-if (empty($arrValidGPUDevices)) {
-?>
+if (empty($arrValidGPUDevices)) { ?>
 <p class="notice">This VM requires a valid graphics device and hardware capable of Intel VT-d or AMD Vi.  If you think you are receiving this message in error, please check your BIOS settings.</p>
 
 <?php
@@ -182,7 +150,6 @@ return;
 }
 
 // CREATE ARRAY OF USB DEVICES
-$arrBlacklistUSBNames = array('/.* root hub$/', '/^Intel Corp.$/');
 $arrValidUSBDevices = array();
 exec("lsusb", $arrAllUSBDevices);
 foreach ($arrAllUSBDevices as $strUSBDevice) {
@@ -194,15 +161,13 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			continue;
 		}
 
-		foreach ($arrBlacklistUSBNames as $strBlacklistUSBName) {
-			if (preg_match($strBlacklistUSBName, $arrMatch['name'])) {
-				// Device name matches a blacklist item, skip device
-				continue 2;
-			}
-		}
-
 		if (stripos($GLOBALS['var']['flashGUID'], str_replace(':', '-', $arrMatch['id'])) === 0) {
 			// Device id matches the unraid device, skip device
+			continue;
+		}
+
+		if (trim(shell_exec('lsusb -d ' . $arrMatch['id'] . ' -v | grep \'bDeviceClass            9 Hub\'')) != '') {
+			// Device class is a Hub, skip device
 			continue;
 		}
 
@@ -230,14 +195,11 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<?php } ?>
 			</select>
 		<?php } else { ?>
-			<input type="hidden" name="gpu" value="">
 			<i>None available</i>
 		<?php } ?>
 
 			<!-- HELP FOR VIDEO DEVICES -->
-			<blockquote class="inline_help">
-			<?php echo Markdown($help_gpu); ?>
-			</blockquote>
+			<blockquote class="inline_help"><?=Markdown($help_gpu)?></blockquote>
 		</dd>
 
 		<!-- ENUMERATE OPTIONS FOR AUDIO SELECTION -->
@@ -246,62 +208,53 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 		<?php if (!empty($arrValidAudioDevices)) { ?>
 			<select name="audio">
 			<?php foreach($arrValidAudioDevices as $x) { ?>
-				<option value="<?php echo $x['dev_id'] ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></option>
+				<option value="<?=$x['dev_id']?>"><?=$x['dev_id']?> | <?=$x['dev_name']?></option>
 			<?php } ?>
 			</select>
 		<?php } else { ?>
-			<input type="hidden" name="audio" value="">
 			<i>None available</i>
 		<?php } ?>
 
 			<!-- HELP FOR AUDIO DEVICES -->
-			<blockquote class="inline_help">
-			<?php echo Markdown($help_audio); ?>
-			</blockquote>
+			<blockquote class="inline_help"><?=Markdown($help_audio)?></blockquote>
 		</dd>
 
 		<!-- ENUMERATE OPTIONS FOR USB SELECTION -->
 		<dt>USB Devices:</dt>
 		<dd>
-		<?php if (!empty($arrValidUSBDevices)) {
-				$y=0;
-				foreach($arrValidUSBDevices as $x) { ?>
-				<input type="checkbox" name="usb[]" id="usb<?php echo ++$y ?>" value="<?php echo $x['dev_id'] ?>"> <label for="usb<?php echo $y ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></label><br/>
-			<?php }
-		} else { ?>
-			<input type="hidden" name="usb[]" value="">
+		<?php if (!empty($arrValidUSBDevices)) { ?>
+			<span style="display: inline-block;">
+			<?php foreach($arrValidUSBDevices as $i=>$x) { ?>
+				<label for="usb<?=$i?>"><input type="checkbox" name="usb[]" id="usb<?=$i?>" value="<?=$x['dev_id']?>"/> <?=$x['dev_id']?> | <?=$x['dev_name']?></label><br/>
+			<?php } ?>
+			</span>
+		<?php } else { ?>
 			<i>None available</i>
 		<?php } ?>
 
 			<!-- HELP FOR USB DEVICES -->
-			<blockquote class="inline_help">
-			<?php echo Markdown($help_usb); ?>
-			</blockquote>
+			<blockquote class="inline_help"><?=Markdown($help_usb)?></blockquote>
 		</dd>
 
 		<!-- UNRAID BRIDGE GLOBAL VARIABLE PASS -->
-		<input type="hidden" name="bridge" value="<?php echo $GLOBALS['var']['BRNAME'] ?>"/>
+		<input type="hidden" name="bridge" value="<?=$GLOBALS['var']['BRNAME']?>"/>
 
 		<!-- READONLY MODE FOR USER SHARE -->
 		<dt>Media Readonly:</dt>
 		<dd>
-			<input type="checkbox" name="readonly" id="readonly" value="1" checked="checked"> <label for="readonly">Prevent OpenELEC write access to your media files</label>
+			<label for="readonly"><input type="checkbox" name="readonly" id="readonly" value="1" checked="checked"/> Prevent OpenELEC write access to your media files</label>
 
 			<!-- HELP FOR MEDIA READ-ONLY -->
-			<blockquote class="inline_help">
-			<?php echo Markdown($help_readonly); ?>
-			</blockquote>
+			<blockquote class="inline_help"><?=Markdown($help_readonly)?></blockquote>
 		</dd>
 
 		<!-- START AND STOP VM -->
-		<dt></dt>
+		<dt>&nbsp;</dt>
 		<dd>
 			<input type="submit" value="Start VM"/>
 
 			<!-- BLOCKQUOTE FOR RENDERING INLINE HELP -->
-			<blockquote class="inline_help">
-			<?php echo Markdown($help_startvm); ?>
-			</blockquote>
+			<blockquote class="inline_help"><?=Markdown($help_startvm)?></blockquote>
 		</dd>
 
 	</dl>

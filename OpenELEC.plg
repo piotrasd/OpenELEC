@@ -2,6 +2,9 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-23
+			- Eric: cleanup and updated to work in dynamix
+			- Eric: hide all usb hub devices instead of using a name blacklist
 		2014-10-22
 			- Eric: removed mac address input
 		2014-10-21
@@ -42,21 +45,15 @@
 
 
 	ROADMAP
-		- Move plugin to github and configure plugin to utilize the pulling of an archive (tar.xz) into the /config/packages folder for auto-extraction host start-up.
-		- Make webGui page to display VM status indicator
-		- When a user clicks to start a VM from within the webGui, the page should refresh immediately to show the VM running and remove controls from allowing the user to attempt to start it again.
-		- When a user clicks to shutdown a VM from within the webGui, it takes a little bit for the VM to actually end all processes and shutdown.  Need to indicate this to the user in a way that prevents them from going "click happy" or prematurely clicking the "Destroy" button.
 		- Whatever settings the user selects (GPU/Audio/USB devices) should remain the default for subsequent VM starts.
 		- Add "autostart" capability for VM (on array start)
-		- Clean up presentation of fields
-		- Change how "mac address" field is displayed and add logic to prevent users from entering in characters that are not valid for the MAC address.  Also eliminate the ability to edit the first three values of the MAC address string.
 -->
 
 <!-- PLUGIN DEFINITIONS -->
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.22">
+	<!ENTITY version   "2014.10.23">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
