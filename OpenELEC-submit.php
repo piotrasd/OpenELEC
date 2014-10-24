@@ -17,6 +17,7 @@ function write_display($string, $failure = false) {
 
 $varGPU = empty($_POST['gpu']) ? '' : $_POST['gpu'];
 $varAudio = empty($_POST['audio']) ? '' : $_POST['audio'];
+$varOtherList = empty($_POST['other']) ? [] : $_POST['other'];
 $varUSBList = empty($_POST['usb']) ? [] : $_POST['usb'];
 $varMAC = empty($_POST['mac']) ? '52:54:00:xx:xx:xx' : $_POST['mac'];
 $varBridge = $_POST['bridge'];
@@ -35,7 +36,7 @@ $varMAC = implode(':', $varMACparts);
 
 
 // VFIO the GPU and Audio
-$arrPassthruDevices = array_filter([$varGPU, $varAudio]);
+$arrPassthruDevices = array_filter([$varGPU, $varAudio] + $varOtherList);
 foreach ($arrPassthruDevices as $strPassthruDevice) {
 	// Ensure we have leading 0000:
 	$strPassthruDeviceShort = str_replace('0000:', '', $strPassthruDevice);
@@ -85,17 +86,21 @@ foreach ($arrPassthruDevices as $strPassthruDevice) {
 }
 
 
-// Replace variables - GPU
+// Replace variables - PCI Devices
+$varPCIDevices = '';
 if (!empty($varGPU)) {
-	$varGPU = "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varGPU . ",bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>";
+	$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varGPU . ",bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>\n";
 }
-
-// Replace variables - Audio
 if (!empty($varAudio)) {
-	$varAudio = "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varAudio . ",bus=pcie.0'/>";
+	$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varAudio . ",bus=pcie.0'/>\n";
+}
+if (!empty($varOtherList)) {
+	foreach ($varOtherList as $varOtherItem) {
+		$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varOtherItem . ",bus=pcie.0'/>\n";
+	}
 }
 
-// Replace variables - USB
+// Replace variables - USB Devices
 $varUSBDevices = '';
 foreach ($varUSBList as $varUSBItem) {
 	list($vendor, $product) = explode(':', $varUSBItem);
@@ -117,8 +122,7 @@ foreach ($varUSBList as $varUSBItem) {
 write_display('<br>Parsing seed xml file...');
 write_log('Parsing seed xml file: ' . __DIR__ . '/OpenELEC.xml');
 $strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
-$strXMLFile = str_replace('{{GPU_DEVICE}}', $varGPU, $strXMLFile);
-$strXMLFile = str_replace('{{AUDIO_DEVICE}}', $varAudio, $strXMLFile);
+$strXMLFile = str_replace('{{PCI_DEVICES}}', $varPCIDevices, $strXMLFile);
 $strXMLFile = str_replace('{{NET_MAC}}', $varMAC, $strXMLFile);
 $strXMLFile = str_replace('{{NET_BRIDGE}}', $varBridge, $strXMLFile);
 $strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly, $strXMLFile);

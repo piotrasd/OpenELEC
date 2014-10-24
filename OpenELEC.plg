@@ -2,6 +2,9 @@
 
 <!--
 	VERSION INFORMATION
+		2014-10-24a
+			- Eric: Added Other Devices for PCI passthrough.
+			- Eric: Hid Other Devices and Readonly options under Show Advanced Options.
 		2014-10-24
 			- Eric: Added 'None' option for audio device, updated xml replacement code/structure
 		2014-10-23
@@ -55,7 +58,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.24">
+	<!ENTITY version   "2014.10.24a">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">

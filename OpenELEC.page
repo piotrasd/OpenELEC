@@ -3,6 +3,11 @@ Menu="unVMs"
 Title="OpenELEC"
 Type="xmenu"
 ---
+<style>
+	.advanced {
+		display: none;
+	}
+</style>
 <?PHP
 
 // CREATE HELP CONTENTS
@@ -12,6 +17,10 @@ EOT;
 
 $help_audio = <<<EOT
 Select the sound card device you wish to use with your OpenELEC VM.  For most GPUs, audio can be done through HDMI or with a DVI to HDMI adapter.  For those wishing to use their on-board audio as opposed to their HDMI audio, select device 00:1b.0, if available.
+EOT;
+
+$help_other_devices = <<<EOT
+Select any other PCI devices you wish to use inside your OpenELEC VM.
 EOT;
 
 $help_usb = <<<EOT
@@ -116,6 +125,7 @@ $arrWhitelistGPUNames = array('VGA compatible controller');
 $arrWhitelistAudioNames = array('Audio device');
 $arrValidGPUDevices = array();
 $arrValidAudioDevices = array();
+$arrValidOtherDevices = array();
 exec("lspci", $arrAllPCIDevices);
 foreach ($arrAllPCIDevices as $strPCIDevice) {
 	if (preg_match('/^(?P<id>\S+) (?P<type>.+): (?P<name>.+)$/', $strPCIDevice, $arrMatch)) {
@@ -124,8 +134,7 @@ foreach ($arrAllPCIDevices as $strPCIDevice) {
 		} else if (in_array($arrMatch['type'], $arrWhitelistAudioNames)) {
 			$arrName = 'arrValidAudioDevices';
 		} else {
-			// Not in either whitelist, skip device
-			continue;
+			$arrName = 'arrValidOtherDevices';
 		}
 
 		if (!file_exists('/sys/bus/pci/devices/0000:' . $arrMatch['id'] . '/iommu_group/')) {
@@ -228,11 +237,30 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<blockquote class="inline_help"><?=Markdown($help_audio)?></blockquote>
 		</dd>
 
+		<!-- ENUMERATE OPTIONS FOR OTHER DEVICES -->
+		<div class="advanced">
+			<dt>Other Devices:</dt>
+			<dd>
+			<?php if (!empty($arrValidOtherDevices)) { ?>
+				<span style="display: inline-block; padding-bottom: 10px;">
+				<?php foreach($arrValidOtherDevices as $i=>$x) { ?>
+					<label for="other<?=$i?>"><input type="checkbox" name="other[]" id="other<?=$i?>" value="<?=$x['dev_id']?>"/> <?=$x['dev_id']?> | <?=$x['dev_name']?></label><br/>
+				<?php } ?>
+				</span>
+			<?php } else { ?>
+				<i>None available</i>
+			<?php } ?>
+
+				<!-- HELP FOR OTHER DEVICES -->
+				<blockquote class="inline_help"><?=Markdown($help_other_devices)?></blockquote>
+			</dd>
+		</div>
+
 		<!-- ENUMERATE OPTIONS FOR USB SELECTION -->
 		<dt>USB Devices:</dt>
 		<dd>
 		<?php if (!empty($arrValidUSBDevices)) { ?>
-			<span style="display: inline-block;">
+			<span style="display: inline-block; padding-bottom: 10px;">
 			<?php foreach($arrValidUSBDevices as $i=>$x) { ?>
 				<label for="usb<?=$i?>"><input type="checkbox" name="usb[]" id="usb<?=$i?>" value="<?=$x['dev_id']?>"/> <?=$x['dev_id']?> | <?=$x['dev_name']?></label><br/>
 			<?php } ?>
@@ -249,16 +277,18 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 		<input type="hidden" name="bridge" value="<?=$GLOBALS['var']['BRNAME']?>"/>
 
 		<!-- READONLY MODE FOR USER SHARE -->
-		<dt>Media Readonly:</dt>
-		<dd>
-			<label for="readonly"><input type="checkbox" name="readonly" id="readonly" value="1" checked="checked"/> Prevent OpenELEC write access to your media files</label>
+		<div class="advanced">
+			<dt>Media Readonly:</dt>
+			<dd>
+				<label for="readonly"><input type="checkbox" name="readonly" id="readonly" value="1" checked="checked"/> Prevent OpenELEC write access to your media files</label>
 
-			<!-- HELP FOR MEDIA READ-ONLY -->
-			<blockquote class="inline_help"><?=Markdown($help_readonly)?></blockquote>
-		</dd>
+				<!-- HELP FOR MEDIA READ-ONLY -->
+				<blockquote class="inline_help"><?=Markdown($help_readonly)?></blockquote>
+			</dd>
+		</div>
 
 		<!-- START AND STOP VM -->
-		<dt>&nbsp;</dt>
+		<dt><input type="button" onclick="$('.advanced').toggle('slow'); $(this).text(function(i, text){ return text === 'Show Advanced Options' ? 'Hide Advanced Options' : 'Show Advanced Options'; })" value="Show Advanced Options"/></dt>
 		<dd>
 			<input type="submit" value="Start VM"/>
 
