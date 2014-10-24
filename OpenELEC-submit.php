@@ -8,9 +8,10 @@ function write_log($string) {
 
 function write_display($string, $failure = false) {
 	if ($failure) {
-		$string = '<span style="color: #FF0000">' . $string . '</span>';
+		$string = "<span style='color: #FF0000'>" . $string . "</span>";
 	}
 	echo "<script>addLog(\"{$string}\");</script>";
+	@flush();
 }
 
 
@@ -84,20 +85,17 @@ foreach ($arrPassthruDevices as $strPassthruDevice) {
 }
 
 
-// Open the seed xml
-write_display('<br>Parsing seed xml file...');
-write_log('Parsing seed xml file: ' . __DIR__ . '/OpenELEC.xml');
-$strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
+// Replace variables - GPU
+if (!empty($varGPU)) {
+	$varGPU = "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varGPU . ",bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>";
+}
 
+// Replace variables - Audio
+if (!empty($varAudio)) {
+	$varAudio = "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varAudio . ",bus=pcie.0'/>";
+}
 
-// Replace variables
-$strXMLFile = str_replace('{{GPU_ADDR}}', $varGPU, $strXMLFile);
-$strXMLFile = str_replace('{{AUDIO_ADDR}}', $varAudio, $strXMLFile);
-$strXMLFile = str_replace('{{NET_MAC}}', $varMAC, $strXMLFile);
-$strXMLFile = str_replace('{{NET_BRIDGE}}', $varBridge, $strXMLFile);
-$strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly, $strXMLFile);
-
-// loop through usb devices and replace with blocks of code
+// Replace variables - USB
 $varUSBDevices = '';
 foreach ($varUSBList as $varUSBItem) {
 	list($vendor, $product) = explode(':', $varUSBItem);
@@ -113,6 +111,17 @@ foreach ($varUSBList as $varUSBItem) {
 	$varUSBDevices .= "		</source>\n";
 	$varUSBDevices .= "	</hostdev>\n\n";
 }
+
+
+// Open the seed xml and replace variables
+write_display('<br>Parsing seed xml file...');
+write_log('Parsing seed xml file: ' . __DIR__ . '/OpenELEC.xml');
+$strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
+$strXMLFile = str_replace('{{GPU_DEVICE}}', $varGPU, $strXMLFile);
+$strXMLFile = str_replace('{{AUDIO_DEVICE}}', $varAudio, $strXMLFile);
+$strXMLFile = str_replace('{{NET_MAC}}', $varMAC, $strXMLFile);
+$strXMLFile = str_replace('{{NET_BRIDGE}}', $varBridge, $strXMLFile);
+$strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly, $strXMLFile);
 $strXMLFile = str_replace('{{USB_DEVICES}}', $varUSBDevices, $strXMLFile);
 
 
@@ -134,5 +143,11 @@ if (file_put_contents('/tmp/OpenELEC.xml', $strXMLFile) === false) {
 // Start the VM
 write_display('<br>Starting VM...');
 write_log('Starting VM with "virsh create /tmp/OpenELEC.xml"');
-write_display('<br>' . shell_exec('virsh create /tmp/OpenELEC.xml 2>&1'));
-sleep(4);
+
+$strOut = shell_exec('virsh create /tmp/OpenELEC.xml 2>&1');
+if (trim($strOut) != '') {
+	write_display('FAILED: ' . $strOut, true);
+} else {
+	write_display('Ok');
+}
+sleep(5);

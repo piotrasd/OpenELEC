@@ -89,10 +89,7 @@
 		<qemu:arg value='-device'/>
 		<qemu:arg value='ioh3420,bus=pcie.0,addr=1c.0,multifunction=on,port=1,chassis=1,id=root.1'/>
 
-		<!-- MODIFY BELOW LINE AFTER 'host=' BASED ON YOUR GPU DEVICE / AUDIO DEVICE -->
-		<qemu:arg value='-device'/>
-		<qemu:arg value='vfio-pci,host={{GPU_ADDR}},bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>
-		<qemu:arg value='-device'/>
-		<qemu:arg value='vfio-pci,host={{AUDIO_ADDR}},bus=pcie.0'/>
+		{{GPU_DEVICE}}
+		{{AUDIO_DEVICE}}
 	</qemu:commandline>
 </domain>

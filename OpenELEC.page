@@ -149,6 +149,15 @@ if (empty($arrValidGPUDevices)) { ?>
 return;
 }
 
+// Add a 'None' option for audio
+if (!empty($arrValidAudioDevices)) {
+	$arrValidAudioDevices[] = array(
+		'dev_id' => '',
+		'dev_type' => '',
+		'dev_name' => 'None'
+	);
+}
+
 // CREATE ARRAY OF USB DEVICES
 $arrValidUSBDevices = array();
 exec("lsusb", $arrAllUSBDevices);
@@ -208,7 +217,7 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 		<?php if (!empty($arrValidAudioDevices)) { ?>
 			<select name="audio">
 			<?php foreach($arrValidAudioDevices as $x) { ?>
-				<option value="<?=$x['dev_id']?>"><?=$x['dev_id']?> | <?=$x['dev_name']?></option>
+				<option value="<?=$x['dev_id']?>"><?=trim($x['dev_id'] . ' | ' . $x['dev_name'], ' |')?></option>
 			<?php } ?>
 			</select>
 		<?php } else { ?>
