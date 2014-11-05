@@ -11,6 +11,18 @@ Type="xmenu"
 <?PHP
 
 // CREATE HELP CONTENTS
+$help_cpu = <<<EOT
+Select the number of CPU cores from your host you wish to use with your OpenELEC VM.
+EOT;
+
+$help_memory = <<<EOT
+Select the amount of RAM from your host you wish to dedicate to your OpenELEC VM.
+EOT;
+
+$help_machinetype = <<<EOT
+Select the VM emulated machine type for your OpenELEC VM.
+EOT;
+
 $help_gpu = <<<EOT
 Select the graphics card device you wish to use with your OpenELEC VM.  Presently we only support AMD and nVIDIA GPUs and the exact list of supported devices is still growing.  We do not support the assignment of on-board graphics at this time.
 EOT;
@@ -47,10 +59,15 @@ $help_forcevm = <<<EOT
 Click this button to force OpenELEC to shutdown immediately (use if VM is stuck in hung state).
 EOT;
 
+$boolLibvirtRunning = file_exists("/var/run/libvirt/libvirtd.pid");
 $boolInstalled = file_exists("/mnt/user/vms/kvm/OpenELEC/OpenELEC-4.2.1-1_LT.img");
 $boolRunning = (shell_exec("virsh list | grep OpenELEC") != "");
 $boolACSEnabled = (strpos(file_get_contents('/proc/cmdline'), 'pcie_acs_override=') !== false);
 
+if (!$boolLibvirtRunning) {
+?><p class="notice">OpenELEC requires the libVirt service to be running.</p><?php
+return;
+}
 
 if (!$boolInstalled) {
 ?><span class="red"><b>OpenELEC is NOT INSTALLED</b></span>
@@ -203,6 +220,52 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 <form action="/plugins/OpenELEC/OpenELEC-submit.php" method="POST" target="progressFrame">
 	<dl>
 
+		<!-- NUMBER OF CPU CORES -->
+		<div class="advanced">
+			<dt>CPU Cores:</dt>
+			<dd>
+				<select name="vcpus">
+					<option value="1">1</option>
+					<option value="2" selected="selected">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+
+				<!-- HELP FOR CPU CORES -->
+				<blockquote class="inline_help"><?=Markdown($help_cpu)?></blockquote>
+			</dd>
+		</div>
+
+		<!-- RAM -->
+		<div class="advanced">
+			<dt>Memory (RAM):</dt>
+			<dd>
+				<select name="memory">
+					<option value="512">512 MB</option>
+					<option value="1024" selected="selected">1 GB</option>
+					<option value="1536">1.5 GB</option>
+					<option value="2048">2 GB</option>
+				</select>
+
+				<!-- HELP FOR MEMORY -->
+				<blockquote class="inline_help"><?=Markdown($help_memory)?></blockquote>
+			</dd>
+		</div>
+
+		<!-- RAM -->
+		<div class="advanced">
+			<dt>Machine Type:</dt>
+			<dd>
+				<select name="machinetype">
+					<option value="pc">i440fx</option>
+					<option value="q35" selected="selected">Q35</option>
+				</select>
+
+				<!-- HELP FOR MACHINE TYPE -->
+				<blockquote class="inline_help"><?=Markdown($help_machinetype)?></blockquote>
+			</dd>
+		</div>
+
 		<!-- ENUMERATE OPTIONS FOR VIDEO SELECTION -->
 		<dt>Graphics Card:</dt>
 		<dd>
@@ -237,6 +300,7 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<blockquote class="inline_help"><?=Markdown($help_audio)?></blockquote>
 		</dd>
 
+		<? /*
 		<!-- ENUMERATE OPTIONS FOR OTHER DEVICES -->
 		<div class="advanced">
 			<dt>Other Devices:</dt>
@@ -255,6 +319,7 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 				<blockquote class="inline_help"><?=Markdown($help_other_devices)?></blockquote>
 			</dd>
 		</div>
+		*/ ?>
 
 		<!-- ENUMERATE OPTIONS FOR USB SELECTION -->
 		<dt>USB Devices:</dt>

@@ -2,6 +2,11 @@
 
 <!--
 	VERSION INFORMATION
+		2014-11-05
+			- Eric: Added check to make sure libvirt service is running
+			- Eric: New Advanced Options: CPU, Memory, and Machine Type
+			- Eric: Removed 'Other Devices' Advanced Option for now
+			- Eric: Cleaned up XML template
 		2014-10-24a
 			- Eric: Added Other Devices for PCI passthrough.
 			- Eric: Hid Other Devices and Readonly options under Show Advanced Options.
@@ -58,7 +63,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.10.24a">
+	<!ENTITY version   "2014.11.05">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">

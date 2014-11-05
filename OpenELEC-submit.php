@@ -22,6 +22,24 @@ $varUSBList = empty($_POST['usb']) ? [] : $_POST['usb'];
 $varMAC = empty($_POST['mac']) ? '52:54:00:xx:xx:xx' : $_POST['mac'];
 $varBridge = $_POST['bridge'];
 $varReadonly = empty($_POST['readonly']) ? '' : '<readonly/>';
+$varMemory = empty($_POST['memory']) ? '1024' : $_POST['memory'];
+$varVCPUs = empty($_POST['vcpus']) ? 2 : intval($_POST['vcpus']);
+$varMachineType = empty($_POST['machinetype']) ? 'q35' : $_POST['machinetype'];
+
+
+// Ensure valid cpu core count
+$intCPUCoreCount = intval(trim(shell_exec('nproc')));
+if (empty($intCPUCoreCount)) {
+	$intCPUCoreCount = 1;
+}
+$varVCPUs = max(min($intCPUCoreCount, $varVCPUs), 1);
+
+
+// Ensure valid machine type
+$arrValidMachineTypes = ['q35', 'pc'];
+if (!in_array($varMachineType, $arrValidMachineTypes)) {
+	$varMachineType = $arrValidMachineTypes[0];
+}
 
 
 // Replace wildcard chars in MAC
@@ -89,33 +107,52 @@ foreach ($arrPassthruDevices as $strPassthruDevice) {
 // Replace variables - PCI Devices
 $varPCIDevices = '';
 if (!empty($varGPU)) {
-	$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varGPU . ",bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>\n";
+	$varPCIDevices .= "<qemu:arg value='-device'/>\n\t\t";
+	$varPCIDevices .= "<qemu:arg value='vfio-pci,host=" . $varGPU . ",bus=root.1,addr=00.0,multifunction=on,x-vga=on'/>\n\t\t";
 }
 if (!empty($varAudio)) {
-	$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varAudio . ",bus=pcie.0'/>\n";
+	$varPCIDevices .= "<qemu:arg value='-device'/>\n\t\t";
+	$varPCIDevices .= "<qemu:arg value='vfio-pci,host=" . $varAudio . ",bus=pci{{PCI_PCIE}}.0'/>\n\t\t";
 }
 if (!empty($varOtherList)) {
 	foreach ($varOtherList as $varOtherItem) {
-		$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varOtherItem . ",bus=pcie.0'/>\n";
+		$varPCIDevices .= "<qemu:arg value='-device'/><qemu:arg value='vfio-pci,host=" . $varOtherItem . ",bus=pci{{PCI_PCIE}}.0'/>\n\t\t";
 	}
 }
+$varPCIDevices = trim($varPCIDevices);
 
 // Replace variables - USB Devices
 $varUSBDevices = '';
-foreach ($varUSBList as $varUSBItem) {
-	list($vendor, $product) = explode(':', $varUSBItem);
-
-	if (empty($vendor) || empty($vendor)) {
-		continue;
+if (!empty($varUSBList)) {
+	if ($varMachineType == 'q35') {
+		// Q35 needs a usb controller added, i440fx comes with one a default
+		$varUSBDevices .= "<controller type='usb' index='0'/>\n\n\t\t";
 	}
 
-	$varUSBDevices .= "	<hostdev mode='subsystem' type='usb'>\n";
-	$varUSBDevices .= "		<source>\n";
-	$varUSBDevices .= "			<vendor id='0x" . $vendor . "'/>\n";
-	$varUSBDevices .= "			<product id='0x" . $product . "'/>\n";
-	$varUSBDevices .= "		</source>\n";
-	$varUSBDevices .= "	</hostdev>\n\n";
+	foreach ($varUSBList as $varUSBItem) {
+		list($vendor, $product) = explode(':', $varUSBItem);
+
+		if (empty($vendor) || empty($vendor)) {
+			continue;
+		}
+
+		$varUSBDevices .= "<hostdev mode='subsystem' type='usb'>\n\t\t";
+		$varUSBDevices .= "	<source>\n\t\t";
+		$varUSBDevices .= "		<vendor id='0x" . $vendor . "'/>\n\t\t";
+		$varUSBDevices .= "		<product id='0x" . $product . "'/>\n\t\t";
+		$varUSBDevices .= "	</source>\n\t\t";
+		$varUSBDevices .= "</hostdev>\n\n\t\t";
+	}
+
+	$varUSBDevices = trim($varUSBDevices);
 }
+
+// Build the CPU Tune section
+$varCPUTune = '';
+for ($i=0; $i < $varVCPUs; $i++) {
+	$varCPUTune .= "<vcpupin vcpu='" . $i . "' cpuset='" . ($intCPUCoreCount - ($i + 1)) . "'/>\n\t\t";
+}
+$varCPUTune = trim($varCPUTune);
 
 
 // Open the seed xml and replace variables
@@ -127,6 +164,11 @@ $strXMLFile = str_replace('{{NET_MAC}}', $varMAC, $strXMLFile);
 $strXMLFile = str_replace('{{NET_BRIDGE}}', $varBridge, $strXMLFile);
 $strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly, $strXMLFile);
 $strXMLFile = str_replace('{{USB_DEVICES}}', $varUSBDevices, $strXMLFile);
+$strXMLFile = str_replace('{{MEMORY}}', $varMemory, $strXMLFile);
+$strXMLFile = str_replace('{{VCPUS}}', $varVCPUs, $strXMLFile);
+$strXMLFile = str_replace('{{CPU_TUNE}}', $varCPUTune, $strXMLFile);
+$strXMLFile = str_replace('{{MACHINE_TYPE}}', $varMachineType, $strXMLFile);
+$strXMLFile = str_replace('{{PCI_PCIE}}', $varMachineType == 'q35' ? 'e' : '', $strXMLFile);
 
 
 // Save the modified xml to the tmp folder
