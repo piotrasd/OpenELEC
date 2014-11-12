@@ -120,21 +120,36 @@ if ($boolRunning) { ?>
 	<input type="hidden" name="#command" value="virsh shutdown OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
 	<input type="submit" value="Stop VM"/>
 </form>
-
-<!-- HELP FOR STOP VM -->
 <blockquote class="inline_help"><?=Markdown($help_stopvm)?></blockquote>
 
 <form target="progressFrame" action="/update.php" method="POST">
 	<input type="hidden" name="#command" value="virsh destroy OpenELEC &amp;&amp; i=0; while [ $(virsh list | grep OpenELEC | wc -l) -gt &quot;0&quot; -a &quot;$i&quot; -le &quot;30&quot; ]; do i=`expr $i + 1`; sleep 1; done"/>
 	<input type="submit" value="Force Shutdown VM"/>
 </form>
-
-<!-- HELP FOR FORCE STOP VM -->
 <blockquote class="inline_help"><?=Markdown($help_forcevm)?></blockquote>
 
 <?php
 return;
 }
+
+$arrValidCPUCoreAmounts = [
+	1 => '1',
+	2 => '2',
+	3 => '3',
+	4 => '4'
+];
+
+$arrValidMemoryAmounts = [
+	512 => '512 MB',
+	1024 => '1 GB',
+	1536 => '1.5 GB',
+	2048 => '2 GB'
+];
+
+$arrValidMachineTypes = [
+	'q35' => 'i440fx',
+	'pc' => 'Q35'
+];
 
 
 // CREATE ARRAY OF GPU/AUDIO DEVICES
@@ -213,6 +228,28 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 	}
 }
 
+
+// Default configuration
+$arrConfiguration = [
+	'gpu' => empty($arrValidGPUDevices) ? '' : $arrValidGPUDevices[0]['dev_id'],
+	'audio' => empty($arrValidAudioDevices) ? '' : $arrValidAudioDevices[0]['dev_id'],
+	'other' => [],
+	'usb' => [],
+	'mac' => '52:54:00:xx:xx:xx',
+	'bridge' => $GLOBALS['var']['BRNAME'],
+	'readonly' => true,
+	'memory' => 1024,
+	'vcpus' => 2,
+	'machinetype' => 'q35'
+];
+
+// Read existing configuration file (if available)
+if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
+	if ($strConfigFile = file_get_contents('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
+		$arrConfiguration = json_decode($strConfigFile, true);
+	}
+}
+
 ?>
 
 
@@ -225,15 +262,14 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<dt>CPU Cores:</dt>
 			<dd>
 				<select name="vcpus">
-					<option value="1">1</option>
-					<option value="2" selected="selected">2</option>
-					<option value="3">3</option>
-					<option value="4">4</option>
+				<?php
+					foreach($arrValidCPUCoreAmounts as $key => $label) {
+						echo mk_option($arrConfiguration['vcpus'], $key, $label);
+					}
+				?>
 				</select>
-
-				<!-- HELP FOR CPU CORES -->
-				<blockquote class="inline_help"><?=Markdown($help_cpu)?></blockquote>
 			</dd>
+			<blockquote class="inline_help"><?=Markdown($help_cpu)?></blockquote>
 		</div>
 
 		<!-- RAM -->
@@ -241,15 +277,14 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<dt>Memory (RAM):</dt>
 			<dd>
 				<select name="memory">
-					<option value="512">512 MB</option>
-					<option value="1024" selected="selected">1 GB</option>
-					<option value="1536">1.5 GB</option>
-					<option value="2048">2 GB</option>
+				<?php
+					foreach($arrValidMemoryAmounts as $key => $label) {
+						echo mk_option($arrConfiguration['memory'], $key, $label);
+					}
+				?>
 				</select>
-
-				<!-- HELP FOR MEMORY -->
-				<blockquote class="inline_help"><?=Markdown($help_memory)?></blockquote>
 			</dd>
+			<blockquote class="inline_help"><?=Markdown($help_memory)?></blockquote>
 		</div>
 
 		<!-- RAM -->
@@ -257,13 +292,14 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<dt>Machine Type:</dt>
 			<dd>
 				<select name="machinetype">
-					<option value="pc">i440fx</option>
-					<option value="q35" selected="selected">Q35</option>
+				<?php
+					foreach($arrValidMachineTypes as $key => $label) {
+						echo mk_option($arrConfiguration['machinetype'], $key, $label);
+					}
+				?>
 				</select>
-
-				<!-- HELP FOR MACHINE TYPE -->
-				<blockquote class="inline_help"><?=Markdown($help_machinetype)?></blockquote>
 			</dd>
+			<blockquote class="inline_help"><?=Markdown($help_machinetype)?></blockquote>
 		</div>
 
 		<!-- ENUMERATE OPTIONS FOR VIDEO SELECTION -->
@@ -271,36 +307,36 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 		<dd>
 		<?php if (!empty($arrValidGPUDevices)) { ?>
 			<select name="gpu">
-			<?php foreach($arrValidGPUDevices as $x) { ?>
-				<option value="<?php echo $x['dev_id'] ?>"><?php echo $x['dev_id'] ?> | <?php echo $x['dev_name'] ?></option>
-			<?php } ?>
+			<?php
+				foreach($arrValidGPUDevices as $x) {
+					echo mk_option($arrConfiguration['gpu'], $x['dev_id'], trim($x['dev_id'] . ' | ' . $x['dev_name'], ' |'));
+				}
+			?>
 			</select>
 		<?php } else { ?>
 			<i>None available</i>
 		<?php } ?>
-
-			<!-- HELP FOR VIDEO DEVICES -->
-			<blockquote class="inline_help"><?=Markdown($help_gpu)?></blockquote>
 		</dd>
+		<blockquote class="inline_help"><?=Markdown($help_gpu)?></blockquote>
 
 		<!-- ENUMERATE OPTIONS FOR AUDIO SELECTION -->
 		<dt>Sound Card:</dt>
 		<dd>
 		<?php if (!empty($arrValidAudioDevices)) { ?>
 			<select name="audio">
-			<?php foreach($arrValidAudioDevices as $x) { ?>
-				<option value="<?=$x['dev_id']?>"><?=trim($x['dev_id'] . ' | ' . $x['dev_name'], ' |')?></option>
-			<?php } ?>
+			<?php
+				foreach($arrValidAudioDevices as $x) {
+					echo mk_option($arrConfiguration['audio'], $x['dev_id'], trim($x['dev_id'] . ' | ' . $x['dev_name'], ' |'));
+				}
+			?>
 			</select>
 		<?php } else { ?>
 			<i>None available</i>
 		<?php } ?>
-
-			<!-- HELP FOR AUDIO DEVICES -->
-			<blockquote class="inline_help"><?=Markdown($help_audio)?></blockquote>
 		</dd>
+		<blockquote class="inline_help"><?=Markdown($help_audio)?></blockquote>
 
-		<? /*
+		<?php /*
 		<!-- ENUMERATE OPTIONS FOR OTHER DEVICES -->
 		<div class="advanced">
 			<dt>Other Devices:</dt>
@@ -314,10 +350,8 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 			<?php } else { ?>
 				<i>None available</i>
 			<?php } ?>
-
-				<!-- HELP FOR OTHER DEVICES -->
-				<blockquote class="inline_help"><?=Markdown($help_other_devices)?></blockquote>
 			</dd>
+			<blockquote class="inline_help"><?=Markdown($help_other_devices)?></blockquote>
 		</div>
 		*/ ?>
 
@@ -327,39 +361,33 @@ foreach ($arrAllUSBDevices as $strUSBDevice) {
 		<?php if (!empty($arrValidUSBDevices)) { ?>
 			<span style="display: inline-block; padding-bottom: 10px;">
 			<?php foreach($arrValidUSBDevices as $i=>$x) { ?>
-				<label for="usb<?=$i?>"><input type="checkbox" name="usb[]" id="usb<?=$i?>" value="<?=$x['dev_id']?>"/> <?=$x['dev_id']?> | <?=$x['dev_name']?></label><br/>
+				<label for="usb<?=$i?>"><input type="checkbox" name="usb[]" id="usb<?=$i?>" value="<?=$x['dev_id']?>" <?php if (in_array($x['dev_id'], $arrConfiguration['usb'])) echo 'checked="checked"'; ?>/> <?=$x['dev_id']?> | <?=$x['dev_name']?></label><br/>
 			<?php } ?>
 			</span>
 		<?php } else { ?>
 			<i>None available</i>
 		<?php } ?>
-
-			<!-- HELP FOR USB DEVICES -->
-			<blockquote class="inline_help"><?=Markdown($help_usb)?></blockquote>
 		</dd>
+		<blockquote class="inline_help"><?=Markdown($help_usb)?></blockquote>
 
 		<!-- UNRAID BRIDGE GLOBAL VARIABLE PASS -->
-		<input type="hidden" name="bridge" value="<?=$GLOBALS['var']['BRNAME']?>"/>
+		<input type="hidden" name="bridge" value="<?=$arrConfiguration['bridge']?>"/>
 
 		<!-- READONLY MODE FOR USER SHARE -->
-		<div class="advanced">
+		<div>
 			<dt>Media Readonly:</dt>
 			<dd>
-				<label for="readonly"><input type="checkbox" name="readonly" id="readonly" value="1" checked="checked"/> Prevent OpenELEC write access to your media files</label>
-
-				<!-- HELP FOR MEDIA READ-ONLY -->
-				<blockquote class="inline_help"><?=Markdown($help_readonly)?></blockquote>
+				<label for="readonly"><input type="checkbox" name="readonly" id="readonly" value="1" <?php if ($arrConfiguration['readonly'] === true) echo 'checked="checked"'; ?>/> Prevent OpenELEC write access to your media files</label>
 			</dd>
+			<blockquote class="inline_help"><?=Markdown($help_readonly)?></blockquote>
 		</div>
 
 		<!-- START AND STOP VM -->
 		<dt><input type="button" onclick="$('.advanced').toggle('slow'); $(this).text(function(i, text){ return text === 'Show Advanced Options' ? 'Hide Advanced Options' : 'Show Advanced Options'; })" value="Show Advanced Options"/></dt>
 		<dd>
 			<input type="submit" value="Start VM"/>
-
-			<!-- BLOCKQUOTE FOR RENDERING INLINE HELP -->
-			<blockquote class="inline_help"><?=Markdown($help_startvm)?></blockquote>
 		</dd>
+		<blockquote class="inline_help"><?=Markdown($help_startvm)?></blockquote>
 
 	</dl>
 </form>

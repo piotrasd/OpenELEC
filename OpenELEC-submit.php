@@ -21,8 +21,8 @@ $varOtherList = empty($_POST['other']) ? [] : $_POST['other'];
 $varUSBList = empty($_POST['usb']) ? [] : $_POST['usb'];
 $varMAC = empty($_POST['mac']) ? '52:54:00:xx:xx:xx' : $_POST['mac'];
 $varBridge = $_POST['bridge'];
-$varReadonly = empty($_POST['readonly']) ? '' : '<readonly/>';
-$varMemory = empty($_POST['memory']) ? '1024' : $_POST['memory'];
+$varReadonly = empty($_POST['readonly']);
+$varMemory = empty($_POST['memory']) ? 1024 : intval($_POST['memory']);
 $varVCPUs = empty($_POST['vcpus']) ? 2 : intval($_POST['vcpus']);
 $varMachineType = empty($_POST['machinetype']) ? 'q35' : $_POST['machinetype'];
 
@@ -34,13 +34,17 @@ if (empty($intCPUCoreCount)) {
 }
 $varVCPUs = max(min($intCPUCoreCount, $varVCPUs), 1);
 
-
 // Ensure valid machine type
 $arrValidMachineTypes = ['q35', 'pc'];
 if (!in_array($varMachineType, $arrValidMachineTypes)) {
 	$varMachineType = $arrValidMachineTypes[0];
 }
 
+// Ensure valid memory amount
+$arrValidMemoryAmounts = [512, 1024, 1536, 2048];
+if (!in_array($varMemory, $arrValidMemoryAmounts)) {
+	$varMemory = $arrValidMemoryAmounts[1];
+}
 
 // Replace wildcard chars in MAC
 $varMACparts = explode(':', $varMAC);
@@ -104,6 +108,32 @@ foreach ($arrPassthruDevices as $strPassthruDevice) {
 }
 
 
+// Save configuration
+$arrConfiguration = [
+	'gpu' => $varGPU,
+	'audio' => $varAudio,
+	'other' => $varOtherList,
+	'usb' => $varUSBList,
+	'mac' => $varMAC,
+	'bridge' => $varBridge,
+	'readonly' => $varReadonly,
+	'memory' => $varMemory,
+	'vcpus' => $varVCPUs,
+	'machinetype' => $varMachineType
+];
+
+write_display('<br>Saving boot configuration file...');
+if (file_put_contents('/boot/config/plugins/OpenELEC/OpenELEC.conf', json_encode($arrConfiguration, JSON_PRETTY_PRINT)) === false) {
+	write_display('FAILED', true);
+	write_log('ERROR: Failed generating boot configuration file: /boot/config/plugins/OpenELEC/OpenELEC.conf');
+	sleep(4);
+	exit(1);
+} else {
+	write_display('Ok');
+	write_log('Generated boot configuration file: /boot/config/plugins/OpenELEC/OpenELEC.conf');
+}
+
+
 // Replace variables - PCI Devices
 $varPCIDevices = '';
 if (!empty($varGPU)) {
@@ -162,7 +192,7 @@ $strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
 $strXMLFile = str_replace('{{PCI_DEVICES}}', $varPCIDevices, $strXMLFile);
 $strXMLFile = str_replace('{{NET_MAC}}', $varMAC, $strXMLFile);
 $strXMLFile = str_replace('{{NET_BRIDGE}}', $varBridge, $strXMLFile);
-$strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly, $strXMLFile);
+$strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly ? '</readonly>' : '', $strXMLFile);
 $strXMLFile = str_replace('{{USB_DEVICES}}', $varUSBDevices, $strXMLFile);
 $strXMLFile = str_replace('{{MEMORY}}', $varMemory, $strXMLFile);
 $strXMLFile = str_replace('{{VCPUS}}', $varVCPUs, $strXMLFile);
@@ -175,7 +205,7 @@ $strXMLFile = str_replace('{{PCI_PCIE}}', $varMachineType == 'q35' ? 'e' : '', $
 write_display('<br>Saving generated xml file...');
 if (file_put_contents('/tmp/OpenELEC.xml', $strXMLFile) === false) {
 	write_display('FAILED', true);
-	write_log('ERROR: Failed generated xml file: /tmp/OpenELEC.xml');
+	write_log('ERROR: Failed generating xml file: /tmp/OpenELEC.xml');
 	sleep(4);
 	exit(1);
 } else {
