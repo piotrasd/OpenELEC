@@ -147,8 +147,8 @@ $arrValidMemoryAmounts = [
 ];
 
 $arrValidMachineTypes = [
-	'q35' => 'i440fx',
-	'pc' => 'Q35'
+	'q35' => 'Q35',
+	'pc' => 'i440fx'
 ];
 
 
@@ -246,7 +246,9 @@ $arrConfiguration = [
 // Read existing configuration file (if available)
 if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 	if ($strConfigFile = file_get_contents('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
-		$arrConfiguration = json_decode($strConfigFile, true);
+		$arrExistingConfiguration = json_decode($strConfigFile, true);
+		unset($arrExistingConfiguration['bridge']); // Remove the existing bridge value for now
+		$arrConfiguration = array_merge($arrConfiguration, $arrExistingConfiguration);
 	}
 }
 
@@ -257,7 +259,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 <form action="/plugins/OpenELEC/OpenELEC-submit.php" method="POST" target="progressFrame">
 	<dl>
 
-		<!-- NUMBER OF CPU CORES -->
 		<div class="advanced">
 			<dt>CPU Cores:</dt>
 			<dd>
@@ -272,7 +273,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 			<blockquote class="inline_help"><?=Markdown($help_cpu)?></blockquote>
 		</div>
 
-		<!-- RAM -->
 		<div class="advanced">
 			<dt>Memory (RAM):</dt>
 			<dd>
@@ -287,7 +287,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 			<blockquote class="inline_help"><?=Markdown($help_memory)?></blockquote>
 		</div>
 
-		<!-- RAM -->
 		<div class="advanced">
 			<dt>Machine Type:</dt>
 			<dd>
@@ -302,7 +301,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 			<blockquote class="inline_help"><?=Markdown($help_machinetype)?></blockquote>
 		</div>
 
-		<!-- ENUMERATE OPTIONS FOR VIDEO SELECTION -->
 		<dt>Graphics Card:</dt>
 		<dd>
 		<?php if (!empty($arrValidGPUDevices)) { ?>
@@ -319,7 +317,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 		</dd>
 		<blockquote class="inline_help"><?=Markdown($help_gpu)?></blockquote>
 
-		<!-- ENUMERATE OPTIONS FOR AUDIO SELECTION -->
 		<dt>Sound Card:</dt>
 		<dd>
 		<?php if (!empty($arrValidAudioDevices)) { ?>
@@ -337,7 +334,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 		<blockquote class="inline_help"><?=Markdown($help_audio)?></blockquote>
 
 		<?php /*
-		<!-- ENUMERATE OPTIONS FOR OTHER DEVICES -->
 		<div class="advanced">
 			<dt>Other Devices:</dt>
 			<dd>
@@ -355,7 +351,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 		</div>
 		*/ ?>
 
-		<!-- ENUMERATE OPTIONS FOR USB SELECTION -->
 		<dt>USB Devices:</dt>
 		<dd>
 		<?php if (!empty($arrValidUSBDevices)) { ?>
@@ -370,10 +365,10 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 		</dd>
 		<blockquote class="inline_help"><?=Markdown($help_usb)?></blockquote>
 
-		<!-- UNRAID BRIDGE GLOBAL VARIABLE PASS -->
 		<input type="hidden" name="bridge" value="<?=$arrConfiguration['bridge']?>"/>
 
-		<!-- READONLY MODE FOR USER SHARE -->
+		<input type="hidden" name="mac" value="<?=$arrConfiguration['mac']?>"/>
+
 		<div>
 			<dt>Media Readonly:</dt>
 			<dd>
@@ -382,7 +377,6 @@ if (file_exists('/boot/config/plugins/OpenELEC/OpenELEC.conf')) {
 			<blockquote class="inline_help"><?=Markdown($help_readonly)?></blockquote>
 		</div>
 
-		<!-- START AND STOP VM -->
 		<dt><input type="button" onclick="$('.advanced').toggle('slow'); $(this).text(function(i, text){ return text === 'Show Advanced Options' ? 'Hide Advanced Options' : 'Show Advanced Options'; })" value="Show Advanced Options"/></dt>
 		<dd>
 			<input type="submit" value="Start VM"/>

@@ -10,7 +10,7 @@ function write_display($string, $failure = false) {
 	if ($failure) {
 		$string = "<span style='color: #FF0000'>" . $string . "</span>";
 	}
-	echo "<script>addLog(\"{$string}\");</script>";
+	echo "<script>addLog(\"{$string}\");</script>\n";
 	@flush();
 }
 
@@ -21,7 +21,7 @@ $varOtherList = empty($_POST['other']) ? [] : $_POST['other'];
 $varUSBList = empty($_POST['usb']) ? [] : $_POST['usb'];
 $varMAC = empty($_POST['mac']) ? '52:54:00:xx:xx:xx' : $_POST['mac'];
 $varBridge = $_POST['bridge'];
-$varReadonly = empty($_POST['readonly']);
+$varReadonly = !empty($_POST['readonly']);
 $varMemory = empty($_POST['memory']) ? 1024 : intval($_POST['memory']);
 $varVCPUs = empty($_POST['vcpus']) ? 2 : intval($_POST['vcpus']);
 $varMachineType = empty($_POST['machinetype']) ? 'q35' : $_POST['machinetype'];
@@ -51,7 +51,7 @@ $varMACparts = explode(':', $varMAC);
 $varMACparts = array_filter($varMACparts);
 for ($i=0; $i < 6; $i++) {
 	if (empty($varMACparts[$i]) || stripos($varMACparts[$i], 'x') !== false) {
-		$varMACparts[$i] = dechex(rand(0, 255));
+		$varMACparts[$i] = str_pad(dechex(rand(0, 255)), 2, '0', STR_PAD_LEFT);
 	}
 }
 $varMAC = implode(':', $varMACparts);
@@ -192,7 +192,7 @@ $strXMLFile = file_get_contents(__DIR__ . '/OpenELEC.xml');
 $strXMLFile = str_replace('{{PCI_DEVICES}}', $varPCIDevices, $strXMLFile);
 $strXMLFile = str_replace('{{NET_MAC}}', $varMAC, $strXMLFile);
 $strXMLFile = str_replace('{{NET_BRIDGE}}', $varBridge, $strXMLFile);
-$strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly ? '</readonly>' : '', $strXMLFile);
+$strXMLFile = str_replace('{{MOUNT_READONLY}}', $varReadonly ? '<readonly/>' : '', $strXMLFile);
 $strXMLFile = str_replace('{{USB_DEVICES}}', $varUSBDevices, $strXMLFile);
 $strXMLFile = str_replace('{{MEMORY}}', $varMemory, $strXMLFile);
 $strXMLFile = str_replace('{{VCPUS}}', $varVCPUs, $strXMLFile);
@@ -220,8 +220,8 @@ if (file_put_contents('/tmp/OpenELEC.xml', $strXMLFile) === false) {
 write_display('<br>Starting VM...');
 write_log('Starting VM with "virsh create /tmp/OpenELEC.xml"');
 
-$strOut = shell_exec('virsh create /tmp/OpenELEC.xml 2>&1');
-if (trim($strOut) != '') {
+$strOut = str_replace(["\n","\r","\t"], [' ','',''], shell_exec('virsh create /tmp/OpenELEC.xml 2>&1'));
+if (stripos(trim($strOut), 'Domain OpenELEC created') !== 0) {
 	write_display('FAILED: ' . $strOut, true);
 } else {
 	write_display('Ok');

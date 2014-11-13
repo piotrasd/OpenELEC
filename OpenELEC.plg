@@ -2,6 +2,11 @@
 
 <!--
 	VERSION INFORMATION
+		2014-11-12
+			- Eric: Fixed persisting mac address, readonly, machine type and bridge values better
+			- Eric: Fixed readonly xml syntax
+			- Eric: Fixed progress display when a libvirt error occurs
+			- Eric: Padded mac address digits with 0 when needed
 		2014-11-11
 			- Eric: Whatever settings the user selects (GPU/Audio/USB devices) should remain the default for subsequent VM starts.
 		2014-11-05
@@ -64,7 +69,7 @@
 <!DOCTYPE PLUGIN [
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
-	<!ENTITY version   "2014.11.11">
+	<!ENTITY version   "2014.11.12">
 	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
