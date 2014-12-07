@@ -73,9 +73,7 @@ if (!$boolInstalled) {
 ?><span class="red"><b>OpenELEC is NOT INSTALLED</b></span>
 <p class="notice">OpenELEC image file is missing because the array isn't started or the image was deleted manually.  You can (re)start the array to automatically download the OpenELEC image file again.</p><?php
 return;
-} else if (!$boolRunning) {
-?><span class="red"><b>OpenELEC is NOT RUNNING</b></span><?php
-} else {
+} else if ($boolRunning) {
 ?><span class="green"><b>OpenELEC is RUNNING</b></span><?php
 }
 
