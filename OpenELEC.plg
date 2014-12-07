@@ -18,63 +18,63 @@
 
 
 <CHANGES>
-2014-12-07
+###2014-12-07
 - Eric: Removed red status text when OpenELEC is stopped
 - Eric: Moved change log in to PLG changes section
 
-2014-11-12
+###2014-11-12
 - Eric: Fixed persisting mac address, readonly, machine type and bridge values better
 - Eric: Fixed readonly xml syntax
 - Eric: Fixed progress display when a libvirt error occurs
 - Eric: Padded mac address digits with 0 when needed
 
-2014-11-11
+###2014-11-11
 - Eric: Whatever settings the user selects (GPU/Audio/USB devices) should remain the default for subsequent VM starts.
 
-2014-11-05
+###2014-11-05
 - Eric: Added check to make sure libvirt service is running
 - Eric: New Advanced Options: CPU, Memory, and Machine Type
 - Eric: Removed 'Other Devices' Advanced Option for now
 - Eric: Cleaned up XML template
 
-2014-10-24a
+###2014-10-24a
 - Eric: Added Other Devices for PCI passthrough.
 - Eric: Hid Other Devices and Readonly options under Show Advanced Options.
 
-2014-10-24
+###2014-10-24
 - Eric: Added 'None' option for audio device, updated xml replacement code/structure
 
-2014-10-23
+###2014-10-23
 - Eric: cleanup and updated to work in dynamix
 - Eric: hide all usb hub devices instead of using a name blacklist
 
-2014-10-22
+###2014-10-22
 - Eric: removed mac address input
 
-2014-10-21
+###2014-10-21
 - Eric: refactored a bunch of device detection code
 - Eric: handled cases for empty lists of pci/usb devices
 - Eric: now at least 1 video device is required otherwise show error about iommu support
 
-2014-10-20a
+###2014-10-20a
 - Eric: automatically add pcie_acs_override to syslinux.cfg if missing
 
-2014-10-20
+###2014-10-20
 - Eric: Fixed bug with write_display in OpenELEC-submit.php
 
-2014-10-19
+###2014-10-19
 - Eric: optimized vfio-pci binding/unbinding
 - Eric: better reporting and logging upon vm startup
 
-2014-10-16b
+###2014-10-16b
 - Eric: minor tweaks to xml to bump version again
 
-2014-10-16a
+###2014-10-16a
 - Eric: hide empty usb devices
 - Eric: better wait code for shutdown/destroy
 - Eric: fixed xml syntax errors
 
-2014-10-16
+###2014-10-16
 - Eric: improved styling
 - Eric: added readonly option
 - Eric: better status reporting if the VM is downloaded, running or stopped
@@ -82,19 +82,19 @@
 - Eric: download status reports every 3 sec instead of 10
 - Eric: bump version up to 2014.10.16
 
-2014-10-15a
+###2014-10-15a
 - Eric: Removed network code block and added more safety checks for disks_mounted event script
 
-2014-10-15
+###2014-10-15
 - Eric: Lots of bug fixes, cleanup, and move to GitHub.
 
-2014-10-07
+###2014-10-07
 - Updating naming convention to OpenELEC.
 
-2014-10-03
+###2014-10-03
 - Updated webGui page to only display stop/destroy buttons if the VM is running.
 
-2014-10-01
+###2014-10-01
 - PLG to wait for network to be ready as a temporary work around to survive reboots.  Will be changing this in an upcoming revision to not be necessary.
 </CHANGES>
 
