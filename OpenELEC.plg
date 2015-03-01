@@ -120,8 +120,8 @@ tar -zxf &plugin;/&version;.tar.gz --strip=1 -C &emhttp;/
 <!-- PLUGIN REMOVAL SCRIPT -->
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
-rm -r /mnt/user/vms/kvm/&name;
-rm -r /mnt/user/appdata/&name;
+rm -r /mnt/cache/.vms/kvm/&name;
+rm -r /mnt/cache/.apps/&name;
 rm -r /usr/local/emhttp/plugins/&name;
 </INLINE>
 </FILE>
