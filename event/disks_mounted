@@ -1,15 +1,15 @@
 #!/bin/sh
 
-NAME="OpenELEC-4.2.1-1_LT"
-DOWNLOAD_PATH="http://dnld.lime-technology.com/images/OpenELEC/$NAME.tar.xz"
-IMAGE_PATH="/mnt/user/vms/kvm/OpenELEC"
+NAME="OpenELEC-unRAID.x86_64-5.0.4.img"
+DOWNLOAD_PATH="https://copy.com/EnohuNlc9RpnlZjJ/$NAME.tar.xz"
+IMAGE_PATH="/mnt/cache/.vms/kvm/OpenELEC"
 
 
-# Test to make sure user share exists, otherwise exit
-[ -d /mnt/user ] || exit 0
+# Test to make sure user cache exists, otherwise exit
+[ -d /mnt/cache ] || exit 0
 
 # Create appdata/OpenELEC folder if needed
-[ -d /mnt/user/appdata/OpenELEC/ ] || mkdir -p /mnt/user/appdata/OpenELEC/
+[ -d /mnt/cache/.apps/OpenELEC/ ] || mkdir -p /mnt/cache/.apps/OpenELEC/
 
 # Create vms/kvm/OpenELEC folder if needed
 [ -d "$IMAGE_PATH" ] || mkdir -p "$IMAGE_PATH"
