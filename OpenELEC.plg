@@ -5,7 +5,7 @@
 	<!ENTITY name      "OpenELEC">
 	<!ENTITY author    "jonpanozzo">
 	<!ENTITY version   "2015.03.01">
-	<!ENTITY pluginURL "https://raw.githubusercontent.com/&author;/&name;/master/&name;.plg">
+	<!ENTITY pluginURL "https://raw.githubusercontent.com/piotrasd/&name;/master/&name;.plg">
 	<!ENTITY plugin    "/boot/config/plugins/&name;">
 	<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
 ]>
