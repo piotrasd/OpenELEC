@@ -214,7 +214,7 @@ if (file_put_contents('/tmp/OpenELEC.xml', $strXMLFile) === false) {
 }
 
 // Ensure NODATACOW is set to all KVM images
-// passthru('chattr +C /mnt/cache/vms/kvm/');
+// passthru('chattr +C /mnt/cache/.vms/kvm/');
 
 // Start the VM
 write_display('<br>Starting VM...');
