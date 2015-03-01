@@ -20,7 +20,7 @@
 		<apic/>
 	</features>
 	<cpu mode='host-passthrough'>
-		<topology sockets='1' cores='{{VCPUS}}' threads='1'/>
+		<topology sockets='2' cores='{{VCPUS}}' threads='2'/>
 	</cpu>
 	<clock offset='localtime'/>
 	<on_poweroff>destroy</on_poweroff>
@@ -32,7 +32,7 @@
 
 		<disk type='file' device='disk'>
 			<driver name='qemu' type='raw'/>
-			<source file='/mnt/user/vms/kvm/OpenELEC/OpenELEC-4.2.1-1_LT.img'/>
+			<source file='/mnt/cache/.vms/kvm/OpenELEC/OpenELEC-unRAID.x86_64-5.0.4.img'/>
 			<target dev='hda' bus='virtio'/>
 			<readonly/>
 		</disk>
@@ -44,7 +44,7 @@
 		</filesystem>
 
 		<filesystem type='mount' accessmode='passthrough'>
-			<source dir='/mnt/user/appdata/OpenELEC'/>
+			<source dir='/mnt/cache/.apps/OpenELEC'/>
 			<target dir='storage'/>
 		</filesystem>
 
