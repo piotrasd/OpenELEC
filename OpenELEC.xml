@@ -40,7 +40,7 @@
 			<driver name='qemu' type='raw' cache='directsync'/>
 			<source file='/mnt/cache/.vms/kvm/OpenELEC/OpenELEC-unRAID.x86_64-5.0.4.img'/>
 			<target dev='hda' bus='virtio'/>
-			<alias name='virtio-disk4'/>
+			<alias name='virtio-disk0'/>
 			<readonly/>
 		</disk>
 
@@ -73,6 +73,6 @@
 		<qemu:arg value='ioh3420,bus=pci{{PCI_PCIE}}.0,addr=1c.0,multifunction=on,port=1,chassis=1,id=root.1'/>
 		{{PCI_DEVICES}}
 		<qemu:arg value='-set'/>
-    		<qemu:arg value='device.virtio-disk4.x-data-plane=on'/>
+    		<qemu:arg value='device.virtio-disk0.x-data-plane=on'/>
 	</qemu:commandline>
 </domain>
